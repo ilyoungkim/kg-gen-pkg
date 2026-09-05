@@ -40,7 +40,7 @@ def load_kg_queries_and_essays() -> List[Dict[str, Any]]:
     # Find all {i}.json files (excluding {i}_results*.json)
     kg_files, graphrag_files, openie_files = [], [], []
     for i in range(1, 110):
-        file_path = f"experiments/MINE/results/kggen/{i}.json"
+        file_path = f"experiments/MINE/results/kngraph/{i}.json"
         if os.path.exists(file_path):
             kg_files.append((i, file_path))
         file_path = f"experiments/MINE/results/GraphRAG/{i}.json"
@@ -74,7 +74,7 @@ def load_kg_queries_and_essays() -> List[Dict[str, Any]]:
         else:
             kg_responses = None
 
-        graphrag_file_path = file_path.replace("kggen", "GraphRAG")
+        graphrag_file_path = file_path.replace("kngraph", "GraphRAG")
         if os.path.exists(graphrag_file_path):
             with open(graphrag_file_path, "r") as f:
                 graphrag_data = json.load(f)
@@ -89,7 +89,7 @@ def load_kg_queries_and_essays() -> List[Dict[str, Any]]:
         else:
             graphrag_responses = None
 
-        openie_file_path = file_path.replace("kggen", "OpenIE")
+        openie_file_path = file_path.replace("kngraph", "OpenIE")
         if os.path.exists(openie_file_path):
             with open(openie_file_path, "r") as f:
                 openie_data = json.load(f)
@@ -119,13 +119,13 @@ def load_kg_queries_and_essays() -> List[Dict[str, Any]]:
             "essay_content": essay.get("content", ""),
             "generated_queries": generated_queries,
             "num_generated_queries": len(generated_queries),
-            "kggen": kg_data,
+            "kngraph": kg_data,
             "graphrag_kg": graphrag_data,
             "openie_kg": openie_data,
-            "kggen_responses": kg_responses,
+            "kngraph_responses": kg_responses,
             "graphrag_responses": graphrag_responses,
             "openie_responses": openie_responses,
-            "kggen_accuracy": extract_accuracy(kg_responses),
+            "kngraph_accuracy": extract_accuracy(kg_responses),
             "graphrag_accuracy": extract_accuracy(graphrag_responses),
             "openie_accuracy": extract_accuracy(openie_responses),
         }
@@ -134,13 +134,13 @@ def load_kg_queries_and_essays() -> List[Dict[str, Any]]:
         print(
             f"Processed {file_path} - Generated queries: {entry['num_generated_queries']}, "
             f"Responses: KG={kg_responses is not None}, GraphRAG={graphrag_responses is not None}, OpenIE={openie_responses is not None}, "
-            f"Accuracies: KG={entry['kggen_accuracy']}, GraphRAG={entry['graphrag_accuracy']}, OpenIE={entry['openie_accuracy']}"
+            f"Accuracies: KG={entry['kngraph_accuracy']}, GraphRAG={entry['graphrag_accuracy']}, OpenIE={entry['openie_accuracy']}"
         )
 
     return dataset_entries
 
 
-def create_and_upload_dataset(repo_name: str = "kg-gen-MINE-evaluation-dataset"):
+def create_and_upload_dataset(repo_name: str = "kngraph-MINE-evaluation-dataset"):
     """Create a Hugging Face dataset and optionally upload it"""
 
     # Get authenticated user and append to repo name if not already included
@@ -165,7 +165,7 @@ def create_and_upload_dataset(repo_name: str = "kg-gen-MINE-evaluation-dataset")
     return dataset_dict
 
 
-def verify_dataset(repo_name="kg-gen-MINE-evaluation-dataset"):
+def verify_dataset(repo_name="kngraph-MINE-evaluation-dataset"):
     """Verify the uploaded dataset by loading it back"""
     from datasets import load_dataset
 
@@ -198,7 +198,7 @@ def main():
     )
     parser.add_argument(
         "--repo-name",
-        default="kg-gen-MINE-evaluation-dataset",
+        default="kngraph-MINE-evaluation-dataset",
         help="Hugging Face repository name",
     )
 

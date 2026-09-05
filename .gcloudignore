@@ -32,4 +32,4 @@ tests/data/
 
 # Include only necessary app files
 !app/index.html
-!src/kg_gen/utils/template.html
+!src/kngraph/utils/template.html

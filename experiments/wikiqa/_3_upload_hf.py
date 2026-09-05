@@ -22,7 +22,7 @@ def upload_wikiqa_dataset(dry_run=False, skip_confirm=False, api_key=None):
         print("HF_TOKEN is not set, run huggingface-cli login")
         sys.exit(1)
 
-    REPO_NAME = "wikiqa-kggen-dataset"
+    REPO_NAME = "wikiqa-kngraph-dataset"
     REPO_TYPE = "dataset"
     ORGANIZATION = None  # ORG NAME?
 
@@ -169,7 +169,7 @@ Knowledge graphs were generated using the KG-Gen library with entity extraction,
 If you use this dataset in your research, please cite:
 
 ```bibtex
-@misc{{kg-gen-wikiqa,
+@misc{{kngraph-wikiqa,
   title={{WikiQA Knowledge Graphs Dataset}},
   author={{KG-Gen Research Team}},
   year={{2024}}

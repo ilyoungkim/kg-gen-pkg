@@ -1,5 +1,7 @@
 import argparse
 import nltk
+import re
+import ssl
 
 
 # Ensure the punkt tokenizer is downloaded
@@ -7,11 +9,25 @@ def ensure_nltk_resource(resource_path, resource_name):
     try:
         nltk.data.find(resource_path)
     except LookupError:
-        nltk.download(resource_name, quiet=True)
+        original_ssl_context = getattr(ssl, "_create_default_https_context", None)
+        try:
+            ssl._create_default_https_context = ssl._create_unverified_context
+            nltk.download(resource_name, quiet=True)
+        finally:
+            if original_ssl_context is not None:
+                ssl._create_default_https_context = original_ssl_context
 
 
 ensure_nltk_resource("tokenizers/punkt", "punkt")
 ensure_nltk_resource("tokenizers/punkt_tab", "punkt_tab")
+
+
+def _fallback_sentence_tokenize(text: str) -> list[str]:
+    return [
+        sentence.strip()
+        for sentence in re.split(r"(?<=[.!?。！？])\s+|\n+", text)
+        if sentence.strip()
+    ]
 
 
 def chunk_text(text: str, max_chunk_size=500) -> list[str]:
@@ -24,7 +40,10 @@ def chunk_text(text: str, max_chunk_size=500) -> list[str]:
     :return: A list of text chunks.
     """
     # Step 1: Split text into sentences
-    sentences = nltk.sent_tokenize(text)
+    try:
+        sentences = nltk.sent_tokenize(text)
+    except LookupError:
+        sentences = _fallback_sentence_tokenize(text)
 
     chunks = []
     current_chunk = ""

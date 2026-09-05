@@ -19,15 +19,15 @@ def test_memory_file_creation_and_loading():
         sys.path.insert(0, server_dir)
 
     import server
-    from kg_gen.models import Graph
+    from kngraph.models import Graph
 
     with tempfile.TemporaryDirectory() as temp_dir:
         storage_path = os.path.join(temp_dir, "test_memory.json")
 
-        # Mock the KGGen to avoid API calls
-        with patch("server.KGGen") as mock_kg_gen:
+        # Mock the KNGraph to avoid API calls
+        with patch("server.KNGraph") as mock_kngraph:
             mock_instance = MagicMock()
-            mock_kg_gen.return_value = mock_instance
+            mock_kngraph.return_value = mock_instance
 
             # Set up environment for testing
             original_storage = server.storage_path
@@ -107,10 +107,10 @@ def test_memory_file_clearing_on_startup():
 
         assert os.path.exists(storage_path), "Test memory file should exist"
 
-        # Mock KGGen to avoid API calls
-        with patch("server.KGGen") as mock_kg_gen:
+        # Mock KNGraph to avoid API calls
+        with patch("server.KNGraph") as mock_kngraph:
             mock_instance = MagicMock()
-            mock_kg_gen.return_value = mock_instance
+            mock_kngraph.return_value = mock_instance
 
             # Test with clearing enabled
             with patch.dict(
@@ -119,10 +119,10 @@ def test_memory_file_clearing_on_startup():
                 # Reset globals
                 original_storage = server.storage_path
                 original_graph = server.memory_graph
-                original_instance = server.kg_gen_instance
+                original_instance = server.kngraph_instance
 
                 try:
-                    server.initialize_kg_gen()
+                    server.initialize_kngraph()
 
                     # File should be deleted
                     assert not os.path.exists(storage_path), (
@@ -133,7 +133,7 @@ def test_memory_file_clearing_on_startup():
                     # Restore globals
                     server.storage_path = original_storage
                     server.memory_graph = original_graph
-                    server.kg_gen_instance = original_instance
+                    server.kngraph_instance = original_instance
 
 
 def test_memory_file_preservation_without_clearing():
@@ -160,10 +160,10 @@ def test_memory_file_preservation_without_clearing():
 
         assert os.path.exists(storage_path), "Test memory file should exist"
 
-        # Mock KGGen to avoid API calls
-        with patch("server.KGGen") as mock_kg_gen:
+        # Mock KNGraph to avoid API calls
+        with patch("server.KNGraph") as mock_kngraph:
             mock_instance = MagicMock()
-            mock_kg_gen.return_value = mock_instance
+            mock_kngraph.return_value = mock_instance
 
             # Test without clearing (default behavior)
             with patch.dict(os.environ, {"KG_STORAGE_PATH": storage_path}, clear=False):
@@ -174,10 +174,10 @@ def test_memory_file_preservation_without_clearing():
                 # Reset globals
                 original_storage = server.storage_path
                 original_graph = server.memory_graph
-                original_instance = server.kg_gen_instance
+                original_instance = server.kngraph_instance
 
                 try:
-                    server.initialize_kg_gen()
+                    server.initialize_kngraph()
 
                     # File should still exist
                     assert os.path.exists(storage_path), (
@@ -192,7 +192,7 @@ def test_memory_file_preservation_without_clearing():
                     # Restore globals
                     server.storage_path = original_storage
                     server.memory_graph = original_graph
-                    server.kg_gen_instance = original_instance
+                    server.kngraph_instance = original_instance
 
 
 def test_storage_path_configuration():
@@ -207,10 +207,10 @@ def test_storage_path_configuration():
 
     custom_path = "/custom/path/to/memory.json"
 
-    # Mock KGGen to avoid API calls
-    with patch("server.KGGen") as mock_kg_gen:
+    # Mock KNGraph to avoid API calls
+    with patch("server.KNGraph") as mock_kngraph:
         mock_instance = MagicMock()
-        mock_kg_gen.return_value = mock_instance
+        mock_kngraph.return_value = mock_instance
 
         # Mock os.path.exists to avoid file system checks
         with patch("os.path.exists", return_value=False):
@@ -218,10 +218,10 @@ def test_storage_path_configuration():
                 # Reset globals
                 original_storage = server.storage_path
                 original_graph = server.memory_graph
-                original_instance = server.kg_gen_instance
+                original_instance = server.kngraph_instance
 
                 try:
-                    server.initialize_kg_gen()
+                    server.initialize_kngraph()
 
                     # Storage path should be set to custom path
                     assert server.storage_path == custom_path
@@ -230,4 +230,4 @@ def test_storage_path_configuration():
                     # Restore globals
                     server.storage_path = original_storage
                     server.memory_graph = original_graph
-                    server.kg_gen_instance = original_instance
+                    server.kngraph_instance = original_instance

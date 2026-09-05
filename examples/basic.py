@@ -1,5 +1,5 @@
-from kg_gen.models import Graph  # noqa: F401
-from kg_gen import KGGen
+from kngraph.models import Graph  # noqa: F401
+from kngraph import KNGraph
 import json  # noqa: F401
 import os  # noqa: F401
 
@@ -26,7 +26,7 @@ most likely remain “boy” until his beard filled out or he bloodied someone�
 nose over the matter.
 """
 
-kg = KGGen()
+kg = KNGraph()
 # with open("tests/data/kingkiller_chapter_one.txt", "r", encoding="utf-8") as f:
 #     text = f.read()
 
@@ -43,4 +43,4 @@ graph = kg.generate(
 # with open("./examples/graph.json", "r") as f:
 #     graph = Graph(**json.load(f))
 
-KGGen.visualize(graph, "./examples/basic-graph.html", True)
+KNGraph.visualize(graph, "./examples/basic-graph.html", True)

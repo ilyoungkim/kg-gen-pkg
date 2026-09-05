@@ -1,12 +1,13 @@
-from typing import Union, List, Dict, Optional
+from typing import Any, Dict, List, Optional, Union, cast
 from typing_extensions import deprecated
 
-from kg_gen.steps._1_get_entities import get_entities
-from kg_gen.steps._2_get_relations import get_relations
-from kg_gen.steps._3_deduplicate import run_deduplication, DeduplicateMethod
-from kg_gen.utils.chunk_text import chunk_text
-from kg_gen.utils.visualize_kg import visualize as visualize_kg
-from kg_gen.models import Graph
+from kngraph.steps._1_get_entities import get_entities
+from kngraph.steps._2_get_relations import get_relations
+from kngraph.steps._3_deduplicate import run_deduplication, DeduplicateMethod
+from kngraph.utils.chunk_text import chunk_text
+from kngraph.utils.ollama_client import is_ollama_model
+from kngraph.utils.visualize_kg import visualize as visualize_kg
+from kngraph.models import Graph
 import dspy
 import json
 import os
@@ -25,19 +26,28 @@ dspy_logger = logging.getLogger("dspy")
 dspy_logger.setLevel(logging.CRITICAL)
 
 
-class KGGen:
+def _should_print_local_progress() -> bool:
+    return os.getenv('KG_OLLAMA_PROGRESS', '1').lower() not in {'0', 'false', 'no', 'off'}
+
+
+def _print_local_progress(message: str) -> None:
+    if _should_print_local_progress():
+        print(f'[kngraph] {message}', flush=True)
+
+
+class KNGraph:
     def __init__(
         self,
         model: str = "openai/gpt-4o",
         max_tokens: int = 16000,  # minimum for gpt-5 family models
-        temperature: float = 0.0,
-        reasoning_effort: str = None,
-        api_key: str = None,
-        api_base: str = None,
+        temperature: float | None = None,
+        reasoning_effort: str | None = None,
+        api_key: str | None = None,
+        api_base: str | None = None,
         retrieval_model: Optional[str] = None,
         disable_cache: bool = False,
     ):
-        """Initialize KGGen with optional model configuration
+        """Initialize KNGraph with optional model configuration
 
         Args:
             model: Name of model to use (e.g. 'gpt-4')
@@ -52,7 +62,7 @@ class KGGen:
         self.api_key = api_key
         self.api_base = api_base
         self.retrieval_model: Optional[SentenceTransformer] = None
-        self.lm = None
+        self.lm: dspy.LM | None = None
         self.disable_cache = disable_cache
 
         self.init_model(
@@ -65,9 +75,20 @@ class KGGen:
             retrieval_model=retrieval_model,
         )
 
-    def validate_temperature(self, temperature: float):
-        if "gpt-5" in self.model and temperature < 1.0:
-            raise ValueError("Temperature must be 1.0 for gpt-5 family models")
+    def _uses_gpt5_family(self, model: str | None = None) -> bool:
+        resolved_model = model or self.model
+        return "gpt-5" in resolved_model
+
+    def _resolved_temperature(self, temperature: float | None = None) -> float | None:
+        candidate = self.temperature if temperature is None else temperature
+        if self._uses_gpt5_family():
+            return None
+        return candidate
+
+    def _uses_direct_ollama(self, model: str | None = None, api_base: str | None = None) -> bool:
+        resolved_model = model or self.model
+        resolved_api_base = self.api_base if api_base is None else api_base
+        return is_ollama_model(resolved_model, resolved_api_base)
 
     def validate_max_tokens(self, max_tokens: int):
         if "gpt-5" in self.model and max_tokens < 16000:
@@ -75,13 +96,13 @@ class KGGen:
 
     def init_model(
         self,
-        model: str = None,
-        reasoning_effort: str = None,
-        max_tokens: int = None,
-        temperature: float = None,
-        retrieval_model: str = None,
-        api_key: str = None,
-        api_base: str = None,
+        model: str | None = None,
+        reasoning_effort: str | None = None,
+        max_tokens: int | None = None,
+        temperature: float | None = None,
+        retrieval_model: str | None = None,
+        api_key: str | None = None,
+        api_base: str | None = None,
     ):
         """Initialize or reinitialize the model with new parameters
 
@@ -112,40 +133,44 @@ class KGGen:
         if retrieval_model is not None:
             self.retrieval_model = SentenceTransformer(retrieval_model)
 
-        self.validate_temperature(self.temperature)
         self.validate_max_tokens(self.max_tokens)
 
-        # Initialize dspy LM with current settings
+        if self._uses_direct_ollama():
+            self.lm = None
+            return
+
+        lm_kwargs: dict[str, Any] = {
+            "model": self.model,
+            "max_tokens": self.max_tokens,
+            "api_base": self.api_base,
+            "cache": not self.disable_cache,
+            "model_type": "responses" if self.model.startswith("openai/") else "chat",
+        }
+
         if self.api_key:
-            self.lm = dspy.LM(
-                model=self.model,
-                api_key=self.api_key,
-                reasoning={"effort": self.reasoning_effort}
-                if self.reasoning_effort
-                else None,
-                temperature=self.temperature,
-                max_tokens=self.max_tokens,
-                api_base=self.api_base,
-                cache=not self.disable_cache,
-                model_type="responses" if self.model.startswith("openai/") else "chat",
-            )
-        else:
-            self.lm = dspy.LM(
-                model=self.model,
-                temperature=self.temperature,
-                max_tokens=self.max_tokens,
-                api_base=self.api_base,
-                reasoning={"effort": self.reasoning_effort}
-                if self.reasoning_effort
-                else None,
-                cache=not self.disable_cache,
-                model_type="responses" if self.model.startswith("openai/") else "chat",
-            )
+            lm_kwargs["api_key"] = self.api_key
+
+        if self.reasoning_effort:
+            lm_kwargs["reasoning"] = {"effort": self.reasoning_effort}
+
+        resolved_temperature = self._resolved_temperature()
+        if resolved_temperature is not None:
+            lm_kwargs["temperature"] = resolved_temperature
+
+        # Initialize dspy LM with current settings
+        self.lm = dspy.LM(**lm_kwargs)
 
     @staticmethod
     def from_file(file_path: str) -> Graph:
         with open(file_path, "r") as f:
-            graph = Graph(**json.load(f))
+            raw_data = json.load(f)
+            graph = Graph(
+                **{
+                    key: value
+                    for key, value in raw_data.items()
+                    if not str(key).startswith("_")
+                }
+            )
         return graph
 
     @staticmethod
@@ -155,14 +180,14 @@ class KGGen:
     def generate(
         self,
         input_data: Union[str, List[Dict]],
-        model: str = None,
-        api_key: str = None,
-        api_base: str = None,
+        model: str | None = None,
+        api_key: str | None = None,
+        api_base: str | None = None,
         context: str = "",
         chunk_size: Optional[int] = None,
-        reasoning_effort: str = None,
+        reasoning_effort: str | None = None,
         deduplication_method: DeduplicateMethod | None = DeduplicateMethod.SEMHASH,
-        temperature: float = None,
+        temperature: float | None = None,
         output_folder: Optional[str] = None,
         no_dspy: bool = False,
     ) -> Graph:
@@ -206,13 +231,66 @@ class KGGen:
         if any([model, temperature, api_key, api_base, reasoning_effort]):
             self.init_model(
                 model=model or self.model,
-                temperature=temperature or self.temperature,
+                temperature=temperature if temperature is not None else self.temperature,
                 api_key=api_key or self.api_key,
                 api_base=api_base or self.api_base,
                 reasoning_effort=reasoning_effort or self.reasoning_effort,
             )
 
-        def _process(content, lm):
+        use_direct_ollama = no_dspy or self._uses_direct_ollama()
+        active_lm = self.lm
+        if not use_direct_ollama and active_lm is None:
+            raise RuntimeError("Language model is not initialized")
+
+        request_temperature = self._resolved_temperature(temperature)
+
+        def _normalize_entities(values: Any) -> set[str]:
+            return {str(value) for value in values}
+
+        def _normalize_relations(values: Any) -> set[tuple[str, str, str]]:
+            return {
+                (str(source), str(relation), str(target))
+                for source, relation, target in values
+            }
+
+        def _process(content: str, lm: dspy.LM | None, chunk_index: int | None = None, chunk_count: int | None = None) -> tuple[set[str], set[tuple[str, str, str]]]:
+            chunk_label = ''
+            if chunk_index is not None and chunk_count is not None:
+                chunk_label = f'청크 {chunk_index}/{chunk_count} '
+            if use_direct_ollama:
+                _print_local_progress(f'{chunk_label}엔티티 추출 시작 (길이 {len(content)})')
+                entities = get_entities(
+                    content,
+                    is_conversation,
+                    model=self.model,
+                    api_key=self.api_key,
+                    api_base=self.api_base,
+                    temperature=request_temperature,
+                    use_ollama=True,
+                    progress_label=f'{chunk_label}엔티티 추출',
+                )
+                _print_local_progress(f'{chunk_label}엔티티 추출 완료 ({len(entities)}개)')
+                if not entities:
+                    _print_local_progress(f'{chunk_label}엔티티가 없어 관계 추출 건너뜀')
+                    return set(), set()
+                _print_local_progress(f'{chunk_label}관계 추출 시작')
+                relations = get_relations(
+                    content,
+                    entities,
+                    is_conversation=is_conversation,
+                    model=self.model,
+                    api_key=self.api_key,
+                    api_base=self.api_base,
+                    temperature=request_temperature,
+                    use_ollama=True,
+                    progress_label=f'{chunk_label}관계 추출',
+                )
+                _print_local_progress(f'{chunk_label}관계 추출 완료 ({len(relations)}개)')
+                return _normalize_entities(entities), _normalize_relations(relations)
+
+            if lm is None:
+                raise RuntimeError("Language model is not initialized")
+
             with dspy.context(lm=lm):
                 entities = get_entities(
                     content,
@@ -221,9 +299,7 @@ class KGGen:
                     model=self.model,
                     api_key=self.api_key,
                     api_base=self.api_base,
-                    temperature=temperature
-                    if temperature is not None
-                    else self.temperature,
+                    temperature=request_temperature,
                 )
                 relations = get_relations(
                     content,
@@ -233,15 +309,16 @@ class KGGen:
                     model=self.model,
                     api_key=self.api_key,
                     api_base=self.api_base,
-                    temperature=temperature
-                    if temperature is not None
-                    else self.temperature,
+                    temperature=request_temperature,
                 )
-                return entities, relations
+                return _normalize_entities(entities), _normalize_relations(relations)
+
+        entities: set[str] = set()
+        relations: set[tuple[str, str, str]] = set()
 
         if not chunk_size:
             try:
-                entities, relations = _process(processed_input, self.lm)
+                entities, relations = _process(processed_input, active_lm)
             except Exception as e:
                 if "context length" in str(e).lower():
                     logger.warning(
@@ -256,15 +333,28 @@ class KGGen:
             entities = set()
             relations = set()
 
-            with ThreadPoolExecutor() as executor:
-                future_to_chunk = {
-                    executor.submit(_process, chunk, self.lm): chunk for chunk in chunks
-                }
-
-                for future in as_completed(future_to_chunk):
-                    chunk_entities, chunk_relations = future.result()
+            if use_direct_ollama:
+                _print_local_progress(f'로컬 Ollama 청크 처리 시작 ({len(chunks)}개 청크)')
+                for index, chunk in enumerate(chunks, start=1):
+                    chunk_entities, chunk_relations = _process(
+                        chunk,
+                        active_lm,
+                        chunk_index=index,
+                        chunk_count=len(chunks),
+                    )
                     entities.update(chunk_entities)
                     relations.update(chunk_relations)
+                _print_local_progress('로컬 Ollama 청크 처리 완료')
+            else:
+                with ThreadPoolExecutor() as executor:
+                    future_to_chunk = {
+                        executor.submit(_process, chunk, active_lm): chunk for chunk in chunks
+                    }
+
+                    for future in as_completed(future_to_chunk):
+                        chunk_entities, chunk_relations = future.result()
+                        entities.update(chunk_entities)
+                        relations.update(chunk_relations)
 
         graph = Graph(
             entities=entities,
@@ -281,7 +371,7 @@ class KGGen:
             self.export_graph(graph, os.path.join(output_folder, "graph.json"))
         return graph
 
-    @deprecated("Use KGGen.deduplicate() method instead")
+    @deprecated("Use KNGraph.deduplicate() method instead")
     def cluster(
         self,
         graph: Graph,
@@ -294,23 +384,27 @@ class KGGen:
         graph: Graph,
         method: DeduplicateMethod = DeduplicateMethod.FULL,
         semhash_similarity_threshold: float = 0.95,  # recommended to keep at 0.95
-        model: str = None,
-        temperature: float = None,
-        api_key: str = None,
-        api_base: str = None,
+        model: str | None = None,
+        temperature: float | None = None,
+        api_key: str | None = None,
+        api_base: str | None = None,
         context: str = "",  # TODO: implement context
     ) -> Graph:
         # Reinitialize dspy with new parameters if any are provided
         if any([model, temperature, api_key, api_base]):
             self.init_model(
                 model=model or self.model,
-                temperature=temperature or self.temperature,
+                temperature=temperature if temperature is not None else self.temperature,
                 api_key=api_key or self.api_key,
                 api_base=api_base or self.api_base,
             )
 
+        active_lm = self.lm
+        if method != DeduplicateMethod.SEMHASH and active_lm is None:
+            raise RuntimeError("Language model is not initialized")
+
         return run_deduplication(
-            lm=self.lm,
+            lm=active_lm,
             graph=graph,
             method=method,
             retrieval_model=self.retrieval_model,
@@ -345,14 +439,30 @@ class KGGen:
         )
 
     @staticmethod
-    def visualize(graph: Graph, output_path: str, open_in_browser: bool = False):
-        visualize_kg(graph, output_path, open_in_browser=open_in_browser)
+    def visualize(
+        graph: Graph,
+        output_path: str,
+        open_in_browser: bool = False,
+        source_documents: Optional[List[Dict[str, str]]] = None,
+        qa_runtime_config: Optional[Dict[str, Union[str, bool, None]]] = None,
+        build_info: Optional[Dict[str, Union[str, int, None]]] = None,
+        output_metadata: Optional[Dict[str, Union[str, int, list[str], None]]] = None,
+    ):
+        visualize_kg(
+            graph,
+            output_path,
+            open_in_browser=open_in_browser,
+            source_documents=source_documents,
+            qa_runtime_config=qa_runtime_config,
+            build_info=build_info,
+            output_metadata=output_metadata,
+        )
 
     # ====== Retrieval Methods ======
 
     def _parse_embedding_model(
         self, model: Optional[SentenceTransformer] = None
-    ) -> Optional[SentenceTransformer]:
+    ) -> SentenceTransformer:
         if model is None:
             model = self.retrieval_model
         if model is None:
@@ -379,9 +489,11 @@ class KGGen:
         if isinstance(graph, Graph):
             graph = self.to_nx(graph)
 
-        node_embeddings = {node: model.encode(node).tolist() for node in graph.nodes}
+        node_embeddings = {
+            node: np.asarray(model.encode(node), dtype=float) for node in graph.nodes
+        }
         relation_embeddings = {
-            rel: model.encode(rel).tolist()
+            rel: np.asarray(model.encode(rel), dtype=float)
             # TODO: this is triggering index out of range error
             for rel in set(edge[2]["relation"] for edge in graph.edges(data=True))
         }
@@ -416,7 +528,7 @@ class KGGen:
         model: SentenceTransformer,
         k: int = 8,
     ) -> list[tuple[str, float]]:
-        query_embedding = model.encode(query).reshape(1, -1)
+        query_embedding = np.asarray(model.encode(query), dtype=float).reshape(1, -1)
         similarities = []
         for node, embed in node_embeddings.items():
             target_embedding = np.array(embed).reshape(1, -1)
@@ -467,16 +579,25 @@ class KGGen:
 
     # ====== Token Usage ======
     def reset_token_usage(self):
+        if self.lm is None:
+            raise RuntimeError("Language model is not initialized")
         self.lm.history = []
 
     def extract_token_usage_from_history(self) -> Dict[str, int]:
         """Extract token usage from dspy LM history."""
 
+        if self.lm is None:
+            return {
+                "prompt_tokens": 0,
+                "completion_tokens": 0,
+                "total_tokens": 0,
+            }
+
         total_prompt_tokens = 0
         total_completion_tokens = 0
         total_tokens = 0
 
-        for entry in self.lm.history:
+        for entry in cast(list[dict[str, Any]], self.lm.history):
             if isinstance(entry, dict):
                 # Check for usage information in various possible locations
                 usage = entry.get("usage") or entry.get("response", {}).get("usage")

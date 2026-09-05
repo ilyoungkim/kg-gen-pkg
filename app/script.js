@@ -2,7 +2,7 @@
     // Show loading screen immediately on page load
     function showInitialLoadingScreen() {
         const loadingOverlay = document.createElement('div');
-        loadingOverlay.id = 'kg-gen-loading-overlay';
+        loadingOverlay.id = 'kngraph-loading-overlay';
 
         Object.assign(loadingOverlay.style, {
             position: 'fixed',
@@ -698,7 +698,7 @@
     let generateButton = document.getElementById('generateButton');
     let clearTextButton = document.getElementById('clearTextButton');
 
-    console.log('[kg-gen] Element refs:', {
+    console.log('[kngraph] Element refs:', {
         apiKeyInput: !!apiKeyInput,
         modelSelect: !!modelSelect,
         chunkSizeInput: !!chunkSizeInput,
@@ -716,33 +716,33 @@
 
     // localStorage keys for caching form inputs
     const CACHE_KEYS = {
-        apiKey: 'kg-gen-api-key',
-        model: 'kg-gen-model',
-        chunkSize: 'kg-gen-chunk-size',
-        temperature: 'kg-gen-temperature',
-        cluster: 'kg-gen-cluster',
-        retrievalModel: 'kg-gen-retrieval-model',
-        context: 'kg-gen-context'
+        apiKey: 'kngraph-api-key',
+        model: 'kngraph-model',
+        chunkSize: 'kngraph-chunk-size',
+        temperature: 'kngraph-temperature',
+        cluster: 'kngraph-cluster',
+        retrievalModel: 'kngraph-retrieval-model',
+        context: 'kngraph-context'
     };
 
     // Load cached form values from localStorage
     function loadCachedInputs() {
-        console.log('[kg-gen] Loading cached inputs...');
+        console.log('[kngraph] Loading cached inputs...');
         try {
             // Load API key
             const cachedApiKey = localStorage.getItem(CACHE_KEYS.apiKey);
-            console.log('[kg-gen] Cached API key exists:', !!cachedApiKey);
+            console.log('[kngraph] Cached API key exists:', !!cachedApiKey);
             if (cachedApiKey && apiKeyInput) {
                 apiKeyInput.value = cachedApiKey;
-                console.log('[kg-gen] API key loaded');
+                console.log('[kngraph] API key loaded');
             }
 
             // Load model
             const cachedModel = localStorage.getItem(CACHE_KEYS.model);
-            console.log('[kg-gen] Cached model:', cachedModel);
+            console.log('[kngraph] Cached model:', cachedModel);
             if (cachedModel && modelSelect) {
                 modelSelect.value = cachedModel;
-                console.log('[kg-gen] Model loaded:', modelSelect.value);
+                console.log('[kngraph] Model loaded:', modelSelect.value);
             }
 
             // Load chunk size
@@ -765,10 +765,10 @@
 
             // Load retrieval model
             const cachedRetrievalModel = localStorage.getItem(CACHE_KEYS.retrievalModel);
-            console.log('[kg-gen] Cached retrieval model:', cachedRetrievalModel);
+            console.log('[kngraph] Cached retrieval model:', cachedRetrievalModel);
             if (cachedRetrievalModel && retrievalModelSelect) {
                 retrievalModelSelect.value = cachedRetrievalModel;
-                console.log('[kg-gen] Retrieval model loaded:', retrievalModelSelect.value);
+                console.log('[kngraph] Retrieval model loaded:', retrievalModelSelect.value);
             }
 
             // Load context
@@ -777,9 +777,9 @@
                 contextInput.value = cachedContext;
             }
 
-            console.log('[kg-gen] Cached inputs loaded successfully');
+            console.log('[kngraph] Cached inputs loaded successfully');
         } catch (error) {
-            console.warn('[kg-gen] Failed to load cached inputs:', error);
+            console.warn('[kngraph] Failed to load cached inputs:', error);
         }
     }
 
@@ -792,7 +792,7 @@
                 localStorage.removeItem(key);
             }
         } catch (error) {
-            console.warn('[kg-gen] Failed to save cached input:', key, error);
+            console.warn('[kngraph] Failed to save cached input:', key, error);
         }
     }
 
@@ -965,14 +965,14 @@
 
     function showLoadingInPlaceholder(title, message) {
         // Remove any existing loading overlay first
-        const existingOverlay = document.getElementById('kg-gen-loading-overlay');
+        const existingOverlay = document.getElementById('kngraph-loading-overlay');
         if (existingOverlay) {
             existingOverlay.remove();
         }
 
         // Create loading overlay that covers entire screen
         const loadingOverlay = document.createElement('div');
-        loadingOverlay.id = 'kg-gen-loading-overlay';
+        loadingOverlay.id = 'kngraph-loading-overlay';
 
         // Set all styles directly on the element to ensure they're applied
         Object.assign(loadingOverlay.style, {
@@ -1064,7 +1064,7 @@
 
     function hideLoadingInPlaceholder() {
         // Remove the full-screen loading overlay
-        const loadingOverlay = document.getElementById('kg-gen-loading-overlay');
+        const loadingOverlay = document.getElementById('kngraph-loading-overlay');
         if (loadingOverlay) {
             loadingOverlay.remove();
         }
@@ -1125,14 +1125,14 @@
             });
 
             if (exampleMetadata.size === 0) {
-                console.error('[kg-gen] No examples found');
+                console.error('[kngraph] No examples found');
                 return;
             }
 
             // Auto-select and load the first example
             if (items.length > 0) {
                 const firstExample = items[0];
-                console.log('[kg-gen] Auto-loading first example:', firstExample);
+                console.log('[kngraph] Auto-loading first example:', firstExample);
                 // Show loading screen immediately
                 showLoadingInViewer('Loading Example', 'Loading sample graph...');
 
@@ -1169,7 +1169,7 @@
                         // exampleStatus.textContent = `Loaded ${title}.`;
                     })
                     .catch(error => {
-                        console.error('[kg-gen] Failed to load example graph', error);
+                        console.error('[kngraph] Failed to load example graph', error);
                         setStatus(`Failed to load example '${title}': ${error.message}`, 'error');
                         // exampleStatus.textContent = 'Could not load the selected sample.';
                         hideLoadingInViewer();
@@ -1180,7 +1180,7 @@
         } catch (error) {
             document.getElementById('errorGraphMessage').classList.add('show');
             hideFloatingActions();
-            console.error('[kg-gen] Failed to load example graphs', error);
+            console.error('[kngraph] Failed to load example graphs', error);
             setStatus(`Failed to load example graphs: ${error.message}`, 'error');
             hideLoadingInViewer();
             resetViewer();
@@ -1253,7 +1253,7 @@
             // Auto-select and load the first example
             if (items.length > 0) {
                 const firstExample = items[0];
-                console.log('[kg-gen] Auto-loading first example:', firstExample);
+                console.log('[kngraph] Auto-loading first example:', firstExample);
                 exampleSelect.value = firstExample.slug;
                 // Automatically load the first example
                 const meta = exampleMetadata.get(firstExample.slug);
@@ -1263,7 +1263,7 @@
                 setStatus(`Loading example graph: ${title}...`);
             }
         } catch (error) {
-            console.error('[kg-gen] Failed to load example graphs', error);
+            console.error('[kngraph] Failed to load example graphs', error);
             exampleSelect.innerHTML = '';
             const fallbackOption = document.createElement('option');
             fallbackOption.value = '';
@@ -1309,7 +1309,7 @@
     }
 
     async function renderView(viewModel, graphForDownload) {
-        console.info('[kg-gen] Rendering view model');
+        console.info('[kngraph] Rendering view model');
         showLoadingInViewer('Rendering Graph', 'Building visualization...');
         await loadTemplate();
         const html = templateHtml.replace('<!--DATA-->', `\n${sanitizeJson(viewModel)}\n`);
@@ -1384,21 +1384,21 @@
     }
 
     async function handleGraphData(rawJson) {
-        console.log('[kg-gen] handleGraphData called with:', rawJson);
+        console.log('[kngraph] handleGraphData called with:', rawJson);
         if (!rawJson) {
             throw new Error('Empty JSON payload');
         }
 
         const isViewModel = rawJson.nodes && rawJson.edges && rawJson.stats;
         if (isViewModel) {
-            console.info('[kg-gen] Detected precomputed view model');
+            console.info('[kngraph] Detected precomputed view model');
             setStatus('Rendering supplied visualization...');
             await renderView(rawJson, rawJson);
             return;
         }
 
         setStatus('Preparing graph data...');
-        console.info('[kg-gen] Sending graph data to /api/graph/view');
+        console.info('[kngraph] Sending graph data to /api/graph/view');
 
         let remoteError = null;
         const backendPayload = sanitizeGraphForBackend(rawJson);
@@ -1422,7 +1422,7 @@
             }
 
             if (!response.ok) {
-                console.warn('[kg-gen] Graph preparation failed', payload);
+                console.warn('[kngraph] Graph preparation failed', payload);
                 let message = payload && typeof payload === 'object'
                     ? payload.detail || payload.error || payload.message
                     : null;
@@ -1434,12 +1434,12 @@
                 throw new Error(message || 'Failed to prepare graph');
             }
 
-            console.info('[kg-gen] Graph preparation succeeded');
+            console.info('[kngraph] Graph preparation succeeded');
             await renderView(payload.view, payload.graph);
             return;
         } catch (error) {
             remoteError = error;
-            console.warn('[kg-gen] Falling back to local rendering', error);
+            console.warn('[kngraph] Falling back to local rendering', error);
             document.getElementById('errorGraphMessage').classList.add('show');
             hideFloatingActions();
             setStatus(`Failed to load graph: ${error.message}`, 'error');
@@ -1449,11 +1449,11 @@
 
         try {
             const viewModel = buildViewModelLocally(rawJson);
-            console.info('[kg-gen] Graph rendered locally');
+            console.info('[kngraph] Graph rendered locally');
             await renderView(viewModel, rawJson);
             setStatus(`${extractSummary(viewModel)} (rendered locally)`, 'success');
         } catch (fallbackError) {
-            console.error('[kg-gen] Local conversion failed', fallbackError);
+            console.error('[kngraph] Local conversion failed', fallbackError);
             const combinedMessage = fallbackError?.message || remoteError?.message || 'Unknown error';
             setStatus(`Could not load graph: ${combinedMessage}`, 'error');
             document.getElementById('errorGraphMessage').classList.add('show');
@@ -1476,7 +1476,7 @@
         }
 
         setStatus(`Reading ${file.name}...`);
-        console.info('[kg-gen] Reading uploaded graph file', file.name);
+        console.info('[kngraph] Reading uploaded graph file', file.name);
 
         // Hide mobile sidebar and show loading with proper timing
         if (window.sidebarManager && window.sidebarManager.isMobile) {
@@ -1574,8 +1574,8 @@
             formData.append('temperature', temperatureValue);
         }
 
-        setStatus('Generating graph with KGGen...');
-        console.info('[kg-gen] Submitting generate request', {
+        setStatus('Generating graph with KNGraph...');
+        console.info('[kngraph] Submitting generate request', {
             model: modelSelect.value,
             cluster: clusterToggle.checked,
             retrievalModel: retrievalModelSelect.value,
@@ -1583,7 +1583,7 @@
             hasFile: Boolean(textFile)
         });
 
-        showLoadingInViewer('Generating Graph', 'Running KGGen on your text. This may take a few minutes...');
+        showLoadingInViewer('Generating Graph', 'Running KNGraph on your text. This may take a few minutes...');
         if (!hasLoadedGraph) {
             resetViewer();
         }
@@ -1600,12 +1600,12 @@
                 try {
                     payload = JSON.parse(rawBody);
                 } catch (parseError) {
-                    console.warn('[kg-gen] Response was not valid JSON', parseError);
+                    console.warn('[kngraph] Response was not valid JSON', parseError);
                 }
             }
 
             if (!response.ok) {
-                console.warn('[kg-gen] Generation endpoint returned error', payload || rawBody);
+                console.warn('[kngraph] Generation endpoint returned error', payload || rawBody);
                 const message =
                     (payload && (payload.detail || payload.error || payload.message)) ||
                     rawBody?.trim() ||
@@ -1617,7 +1617,7 @@
                 throw new Error('Generation succeeded but returned invalid response.');
             }
 
-            console.info('[kg-gen] Generation succeeded');
+            console.info('[kngraph] Generation succeeded');
             hideGenerateError();
             await renderView(payload.view, payload.graph);
         } catch (error) {
@@ -1695,7 +1695,7 @@
                     await handleGraphData(payload);
                     exampleStatus.textContent = `Loaded ${title}.`;
                 } catch (error) {
-                    console.error('[kg-gen] Failed to load example graph', error);
+                    console.error('[kngraph] Failed to load example graph', error);
                     setStatus(`Failed to load example '${title}': ${error.message}`, 'error');
                     exampleStatus.textContent = 'Could not load the selected sample.';
                     hideLoadingInViewer();
@@ -1733,7 +1733,7 @@
     graphDropZone.addEventListener('drop', event => {
         const files = event.dataTransfer?.files;
         if (files && files.length) {
-            console.info('[kg-gen] File dropped', files[0].name);
+            console.info('[kngraph] File dropped', files[0].name);
             handleGraphFile(files[0]);
         }
     });
@@ -1795,13 +1795,13 @@
     // Initialize when DOM is ready
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
-            console.log('[kg-gen] DOM loaded, initializing caching...');
+            console.log('[kngraph] DOM loaded, initializing caching...');
             loadCachedInputs();
             setupInputCaching();
         });
     } else {
         // DOM is already loaded
-        console.log('[kg-gen] DOM already loaded, initializing caching...');
+        console.log('[kngraph] DOM already loaded, initializing caching...');
         loadCachedInputs();
         setupInputCaching();
     }
@@ -2185,7 +2185,7 @@
         const iframe = document.getElementById('viewer');
         
         if (!iframe) {
-            console.warn('[kg-gen] iframe with id "viewer" not found');
+            console.warn('[kngraph] iframe with id "viewer" not found');
             return;
         }
 
@@ -2234,13 +2234,13 @@
                     // Focus the iframe when it loads
                     iframe.focus();
                     
-                    console.log('[kg-gen] iframe keyboard handling setup complete');
+                    console.log('[kngraph] iframe keyboard handling setup complete');
                 } else {
-                    console.warn('[kg-gen] Cannot access iframe content - may be cross-origin');
+                    console.warn('[kngraph] Cannot access iframe content - may be cross-origin');
                 }
             } catch (error) {
-                console.warn('[kg-gen] Error setting up iframe keyboard handling:', error);
-                console.warn('[kg-gen] This is normal if the iframe content is cross-origin');
+                console.warn('[kngraph] Error setting up iframe keyboard handling:', error);
+                console.warn('[kngraph] This is normal if the iframe content is cross-origin');
             }
         });
         
@@ -2250,7 +2250,7 @@
                 if (mutation.type === 'attributes' && mutation.attributeName === 'hidden') {
                     const iframe = mutation.target;
                     if (!iframe.hasAttribute('hidden')) {
-                        console.log('[kg-gen] iframe became visible, focusing');
+                        console.log('[kngraph] iframe became visible, focusing');
                         setTimeout(() => {
                             iframe.focus();
                         }, 100);
@@ -2261,7 +2261,7 @@
         
         observer.observe(iframe, { attributes: true });
         
-        console.log('[kg-gen] iframe focus management setup complete');
+        console.log('[kngraph] iframe focus management setup complete');
     }
 
     window.loadExamples = loadExamples;

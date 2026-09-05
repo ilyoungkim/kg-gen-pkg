@@ -14,7 +14,7 @@ cloud instances like Neo4j AuraDB):
 
 Example (from a notebook):
 
-    from kg_gen.utils.neo4j_integration import upload_to_neo4j, Neo4jUploader
+    from kngraph.utils.neo4j_integration import upload_to_neo4j, Neo4jUploader
 
     # Simple upload to Neo4j
     success = upload_to_neo4j(
@@ -53,7 +53,7 @@ from typing import Optional
 
 try:
     # Optional import; this script is a thin wrapper used in experiments
-    from kg_gen.utils.neo4j_integration import upload_to_neo4j  # type: ignore
+    from kngraph.utils.neo4j_integration import upload_to_neo4j  # type: ignore
 except Exception:
     upload_to_neo4j = None  # Fallback if the core utility isn't available
 
@@ -69,7 +69,7 @@ def upload_graph_experiment(
 ) -> bool:
     """Minimal helper for experiments to upload a graph to Neo4j.
 
-    This defers to kg_gen.utils.neo4j_integration.upload_to_neo4j if present.
+    This defers to kngraph.utils.neo4j_integration.upload_to_neo4j if present.
     Returns False if the utility isn't available in the environment.
     """
     if upload_to_neo4j is None:

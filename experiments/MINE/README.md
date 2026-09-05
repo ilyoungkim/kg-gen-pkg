@@ -45,11 +45,11 @@ The dashboard provides:
 ## Data Loading
 
 The evaluation script automatically:
-- ✅ **Downloads evaluation data from Hugging Face** ([kg-gen-evaluation-answers](https://huggingface.co/datasets/kyssen/kg-gen-evaluation-answers))
+- ✅ **Downloads evaluation data from Hugging Face** ([kngraph-evaluation-answers](https://huggingface.co/datasets/kyssen/kngraph-evaluation-answers))
 - ✅ **Falls back to local files** if Hugging Face is unavailable
 - ✅ **Shows clear status messages** about data source
 
-**Source Essays:** Available at [kg-gen-evaluation-essays](https://huggingface.co/datasets/kyssen/kg-gen-evaluation-essays) - use these to generate your knowledge graphs.
+**Source Essays:** Available at [kngraph-evaluation-essays](https://huggingface.co/datasets/kyssen/kngraph-evaluation-essays) - use these to generate your knowledge graphs.
 
 ## Local Development
 

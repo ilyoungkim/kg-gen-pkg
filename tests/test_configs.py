@@ -1,5 +1,5 @@
 import os
-from src.kg_gen import KGGen
+from src.kngraph import KNGraph
 from dotenv import load_dotenv
 import pytest
 from fixtures import kg
@@ -8,7 +8,7 @@ API_BASE = os.getenv("API_BASE")
 
 
 # Custom API BAse
-def test_custom_api_base(kg: KGGen):
+def test_custom_api_base(kg: KNGraph):
     # Generate a simple graph
     text = "Harry has two parents - his dad James Potter and his mom Lily Potter. Harry and his wife Ginny have three kids together: their oldest son James Sirius, their other son Albus, and their daughter Lily Luna."
 
@@ -19,7 +19,7 @@ def test_custom_api_base(kg: KGGen):
     print(graph)
 
 
-def test_gen_clus_agg(kg: KGGen):
+def test_gen_clus_agg(kg: KNGraph):
     # Test texts
     text1 = "Linda is Joshua's mother. Ben is Josh's brother. Andrew is Josh's father."
     text2 = "Judy is Andrew's sister. Josh is Judy's nephew. Judy is Josh's aunt. Josh also goes by Joshua."
@@ -68,7 +68,7 @@ def test_gen_clus_agg(kg: KGGen):
     print("Edge Clusters:", clustered_graph.edge_clusters)
 
 
-def test_multiple_models(kg: KGGen):
+def test_multiple_models(kg: KNGraph):
     # Test text input
     text = "Linda is Josh's mother. Ben is Josh's brother. Andrew is Josh's father. Judy is Andrew's sister. Josh is Judy's nephew. Judy is Josh's aunt."
     # Test with different models and their corresponding API keys

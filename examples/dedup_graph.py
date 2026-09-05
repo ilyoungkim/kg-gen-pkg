@@ -6,9 +6,9 @@ import dspy
 from sentence_transformers import SentenceTransformer
 import typer
 
-from kg_gen.utils.llm_deduplicate import LLMDeduplicate
-from kg_gen.utils.deduplicate import run_semhash_deduplication
-from kg_gen.models import Graph
+from kngraph.utils.llm_deduplicate import LLMDeduplicate
+from kngraph.utils.deduplicate import run_semhash_deduplication
+from kngraph.models import Graph
 
 app = typer.Typer()
 

@@ -53,7 +53,7 @@ def reset_server_globals():
     try:
         import server
 
-        server.kg_gen_instance = None
+        server.kngraph_instance = None
         server.memory_graph = None
         server.storage_path = None
     except ImportError:
@@ -65,7 +65,7 @@ def reset_server_globals():
     try:
         import server
 
-        server.kg_gen_instance = None
+        server.kngraph_instance = None
         server.memory_graph = None
         server.storage_path = None
     except ImportError:

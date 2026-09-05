@@ -76,9 +76,9 @@ def test_server_path_resolution():
         # Test with relative path
         relative_path = "./test_memory.json"
 
-        with patch("server.KGGen") as mock_kg_gen:
+        with patch("server.KNGraph") as mock_kngraph:
             mock_instance = type("MockKGGen", (), {})()
-            mock_kg_gen.return_value = mock_instance
+            mock_kngraph.return_value = mock_instance
 
             with patch.dict(
                 os.environ,
@@ -89,13 +89,13 @@ def test_server_path_resolution():
                     original_cwd = os.getcwd()
                     original_storage = server.storage_path
                     original_graph = server.memory_graph
-                    original_instance = server.kg_gen_instance
+                    original_instance = server.kngraph_instance
 
                     try:
                         os.chdir(temp_dir)
                         expected_abs_path = os.path.join(temp_dir, "test_memory.json")
 
-                        server.initialize_kg_gen()
+                        server.initialize_kngraph()
 
                         # Should be converted to absolute path
                         # Use os.path.samefile to handle macOS path resolution differences (/var vs /private/var)
@@ -113,7 +113,7 @@ def test_server_path_resolution():
                         os.chdir(original_cwd)
                         server.storage_path = original_storage
                         server.memory_graph = original_graph
-                        server.kg_gen_instance = original_instance
+                        server.kngraph_instance = original_instance
 
 
 def test_different_working_directories():
@@ -150,10 +150,10 @@ def test_cli_path_resolution_integration():
         test_dir = os.path.join(temp_dir, "integration_test")
         os.makedirs(test_dir)
 
-        # Test that kggen mcp --help works and shows correct help
+        # Test that kngraph mcp --help works and shows correct help
         # We use --help to avoid actually starting the server
         result = subprocess.run(
-            ["python", "-m", "kg_gen.cli", "mcp", "--help"],
+            ["python", "-m", "kngraph.cli", "mcp", "--help"],
             cwd=test_dir,
             capture_output=True,
             text=True,

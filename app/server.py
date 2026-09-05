@@ -11,13 +11,13 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import ValidationError
 
-from src.kg_gen.kg_gen import KGGen
-from src.kg_gen.models import Graph
-from src.kg_gen.utils.visualize_kg import _build_view_model
+from src.kngraph.kngraph import KNGraph
+from src.kngraph.models import Graph
+from src.kngraph.utils.visualize_kg import _build_view_model
 
 APP_DIR = Path(__file__).resolve().parent
 TEMPLATE_PATH = (
-    APP_DIR.parent / "src" / "kg_gen" / "utils" / "template.html"
+    APP_DIR.parent / "src" / "kngraph" / "utils" / "template.html"
 ).resolve()
 DATA_ROOT = (APP_DIR.parent / "app" / "examples").resolve()
 
@@ -51,13 +51,13 @@ if len(EXAMPLE_INDEX) < len(EXAMPLE_GRAPHS):
     missing = [
         example.slug for example in EXAMPLE_GRAPHS if example.slug not in EXAMPLE_INDEX
     ]
-    logger = logging.getLogger("kg_gen_app")
+    logger = logging.getLogger("kngraph_app")
     logger.warning("Example graphs missing on disk: %s", ", ".join(missing))
 
 if not TEMPLATE_PATH.exists():
     raise RuntimeError(f"Template not found at {TEMPLATE_PATH}")
 
-logger = logging.getLogger("kg_gen_app")
+logger = logging.getLogger("kngraph_app")
 if not logger.handlers:
     handler = logging.StreamHandler()
     formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
@@ -66,7 +66,7 @@ if not logger.handlers:
     logger.setLevel(logging.INFO)
 
 
-app = FastAPI(title="kg-gen explorer")
+app = FastAPI(title="kngraph explorer")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -74,7 +74,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-kg_gen = KGGen()
+kngraph = KNGraph()
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -128,7 +128,7 @@ async def load_example(slug: str) -> JSONResponse:
 
 @app.post("/api/graph/view")
 async def build_view(graph: Graph) -> JSONResponse:
-    """Convert a raw KGGen graph payload into the template view model."""
+    """Convert a raw KNGraph graph payload into the template view model."""
     logger.info(
         "Received request to build view: entities=%s relations=%s",
         len(graph.entities),
@@ -235,7 +235,7 @@ async def generate_graph(
         if numeric_temperature is None:
             numeric_temperature = 1.0
 
-    kg_gen.init_model(
+    kngraph.init_model(
         model=model,
         api_key=api_key,
         temperature=numeric_temperature,
@@ -243,7 +243,7 @@ async def generate_graph(
     )
 
     logger.info(
-        "Generating graph via KGGen: model=%s cluster=%s chunk_size=%s context_len=%s text_len=%s temperature=%s retrieval_model=%s",
+        "Generating graph via KNGraph: model=%s cluster=%s chunk_size=%s context_len=%s text_len=%s temperature=%s retrieval_model=%s",
         model,
         _parse_bool(cluster),
         numeric_chunk,
@@ -253,7 +253,7 @@ async def generate_graph(
         retrieval_model,
     )
     try:
-        graph = kg_gen.generate(
+        graph = kngraph.generate(
             input_data=request_text,
             model=model,
             api_key=api_key,
@@ -263,11 +263,11 @@ async def generate_graph(
             temperature=numeric_temperature,
         )
     except ValidationError as exc:
-        logger.exception("KGGen returned validation error")
+        logger.exception("KNGraph returned validation error")
         raise HTTPException(status_code=400, detail=f"Invalid graph result: {exc}")
     except Exception as exc:
-        logger.exception("KGGen generation failed")
-        raise HTTPException(status_code=500, detail=f"KGGen failed: {exc}")
+        logger.exception("KNGraph generation failed")
+        raise HTTPException(status_code=500, detail=f"KNGraph failed: {exc}")
 
     try:
         view = _build_view_model(graph)

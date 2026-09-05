@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Run all MCP server tests for kg-gen.
+Run all MCP server tests for kngraph.
 This script runs all test files in the tests directory.
 """
 
@@ -15,7 +15,7 @@ def main():
     tests_dir = Path(__file__).parent
 
     # Run pytest on all test_*.py files
-    print("Running all kg-gen MCP server tests...")
+    print("Running all kngraph MCP server tests...")
     print("-" * 50)
 
     # Run tests with verbose output

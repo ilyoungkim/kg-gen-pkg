@@ -1,7 +1,7 @@
 from concurrent.futures import ThreadPoolExecutor
 import json
 from typing import Literal
-from kg_gen.kg_gen import KGGen
+from kngraph.kngraph import KNGraph
 import pandas as pd
 import os
 import dspy
@@ -109,7 +109,7 @@ def main(split_name: str):
 
     csv_path = os.path.join(BASE_PATH, f"{split_name}_clean_2.csv")
     df = pd.read_csv(csv_path)
-    kg = KGGen()
+    kg = KNGraph()
     os.makedirs(OUTPUT_KG_DIR, exist_ok=True)
 
     # Track failures

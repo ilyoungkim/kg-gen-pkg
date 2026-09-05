@@ -4,7 +4,7 @@ set -euo pipefail
 echo "🧪 DRY RUN MODE - Testing deployment workflow"
 echo "This script simulates the deployment process without actually deploying"
 
-GCP_PROJECT_ID=kggen-ai
+GCP_PROJECT_ID=kngraph-ai
 CLOUD_RUN_SERVICE=app-test
 CLOUD_RUN_REGION=us-central1
 ARTIFACT_REGISTRY_REPO=app

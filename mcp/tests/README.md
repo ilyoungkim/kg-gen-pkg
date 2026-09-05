@@ -1,6 +1,6 @@
 # MCP Server Tests
 
-This directory contains tests for the kg-gen MCP (Model Context Protocol) server.
+This directory contains tests for the kngraph MCP (Model Context Protocol) server.
 
 ## Test Structure
 
@@ -76,7 +76,7 @@ Tests the full MCP client-server communication for all tools:
 
 Tests individual server functions in isolation:
 
-- `initialize_kg_gen()` - Server initialization
+- `initialize_kngraph()` - Server initialization
 - `load_memory_graph()` - Loading graphs from storage
 - `save_memory_graph()` - Saving graphs to storage
 - Environment variable handling

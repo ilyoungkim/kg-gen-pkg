@@ -1,3 +1,3 @@
 """
-Tests for the kg-gen MCP server.
+Tests for the kngraph MCP server.
 """

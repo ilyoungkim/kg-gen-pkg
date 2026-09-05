@@ -8,14 +8,14 @@ import json
 from pathlib import Path
 from datasets import load_dataset
 import pandas as pd
-from kg_gen import KGGen
-from kg_gen.models import Graph
+from kngraph import KNGraph
+from kngraph.models import Graph
 import urllib.request
 import zipfile
 
 st.set_page_config(page_title="KG Evaluation Results", layout="wide")
 
-RESULTS_URL = "https://github.com/stair-lab/kg-gen/releases/download/MINE-evaluations-expanded/results.zip"
+RESULTS_URL = "https://github.com/stair-lab/kngraph/releases/download/MINE-evaluations-expanded/results.zip"
 RESULTS_DIR = Path("experiments/MINE/results")
 
 
@@ -63,7 +63,7 @@ def ensure_results_exist():
 @st.cache_data
 def load_hf_dataset():
     """Load the HuggingFace dataset."""
-    dataset = load_dataset("josancamon/kg-gen-MINE-evaluation-dataset")["train"]
+    dataset = load_dataset("josancamon/kngraph-MINE-evaluation-dataset")["train"]
     return dataset.to_list()
 
 
@@ -141,7 +141,7 @@ def visualize_kg_in_browser(graph: Graph, model_name: str, essay_idx: int):
     output_dir = RESULTS_DIR / model_name
     output_path = output_dir / f"kg_{essay_idx}_visualization.html"
 
-    KGGen.visualize(graph, str(output_path), open_in_browser=True)
+    KNGraph.visualize(graph, str(output_path), open_in_browser=True)
     st.success("✅ Knowledge graph visualization opened in a new browser window!")
     st.caption(f"File saved to: {output_path}")
 

@@ -1,10 +1,10 @@
-# kg-gen: Knowledge Graph Generation from Any Text
+# kngraph: Knowledge Graph Generation from Any Text
 
-📄 [**Paper**](https://arxiv.org/abs/2502.09956) | 🐍 [**Package**](https://pypi.org/project/kg-gen/) | 🤖 [**MCP**](https://github.com/stair-lab/kg-gen/tree/main/mcp/) | 🔬 [**Experiments**](https://github.com/stair-lab/kg-gen/tree/main/experiments/) | 👩🏻‍💻 [**Dataset**](https://huggingface.co/datasets/belindamo/wiki_qa_kggen) | 🐦 [**X Updates**](https://x.com/belindmo)
+📄 [**Paper**](https://arxiv.org/abs/2502.09956) | 🐍 [**Package**](https://pypi.org/project/kngraph/) | 🤖 [**MCP**](https://github.com/stair-lab/kngraph/tree/main/mcp/) | 🔬 [**Experiments**](https://github.com/stair-lab/kngraph/tree/main/experiments/) | 👩🏻‍💻 [**Dataset**](https://huggingface.co/datasets/belindamo/wiki_qa_kngraph) | 🐦 [**X Updates**](https://x.com/belindmo)
 
-Welcome! `kg-gen` helps you extract knowledge graphs from any plain text using AI. It can process both small and large text inputs, and it can also handle messages in a conversation format.
+Welcome! `kngraph` helps you extract knowledge graphs from any plain text using AI. It can process both small and large text inputs, and it can also handle messages in a conversation format.
 
-Why generate knowledge graphs? `kg-gen` is great if you want to:
+Why generate knowledge graphs? `kngraph` is great if you want to:
 - Create a graph to assist with RAG (Retrieval-Augmented Generation)
 - Create graph synthetic data for model training and testing
 - Structure any text into a graph 
@@ -12,9 +12,9 @@ Why generate knowledge graphs? `kg-gen` is great if you want to:
 
 We support API-based and local model providers via [LiteLLM](https://docs.litellm.ai/docs/providers), including OpenAI, Ollama, Anthropic, Gemini, Deepseek, and others. We also use [DSPy](https://dspy.ai/) for structured output generation.
 
-- Try it out by running the scripts in [`tests/`](https://github.com/stair-lab/kg-gen/tree/main/tests).
-- Instructions to run our KG benchmark MINE are in [`MINE/`](https://github.com/stair-lab/kg-gen/tree/main/experiments/MINE).
-- Read the paper: [KGGen: Extracting Knowledge Graphs from Plain Text with Language Models](https://arxiv.org/abs/2502.09956)
+- Try it out by running the scripts in [`tests/`](https://github.com/stair-lab/kngraph/tree/main/tests).
+- Instructions to run our KG benchmark MINE are in [`MINE/`](https://github.com/stair-lab/kngraph/tree/main/experiments/MINE).
+- Read the paper: [KNGraph: Extracting Knowledge Graphs from Plain Text with Language Models](https://arxiv.org/abs/2502.09956)
 
 ## Powered by a model of your choice
 
@@ -25,25 +25,32 @@ Examples of models you can pass in:
 - `gemini/gemini-2.5-flash`
 - `ollama_chat/deepseek-r1:14b`
 
-You may specify a custom API base url with `base_url` ([example here](https://github.com/stair-lab/kg-gen/tree/main/tests/test_custom_api_base.py)).
+You may specify a custom API base url with `base_url` ([example here](https://github.com/stair-lab/kngraph/tree/main/tests/test_custom_api_base.py)).
 
 ## Quick start
 
 Install the module:
 ```bash
-pip install kg-gen
+pip install kngraph
 ```
 
-Then import and use `kg-gen`. You can provide your text input in one of two formats:
+## Security Note
+
+- This repository constrains LiteLLM to `litellm<1.82.7` due to the compromised PyPI `1.82.7` and `1.82.8` releases.
+- The current locked environments use safe versions only.
+- If you previously installed either compromised version, recreate your virtual environment before continuing.
+- As part of the mitigation, the local environments were checked for `litellm_init.pth` and no such startup hook was found.
+
+Then import and use `kngraph`. You can provide your text input in one of two formats:
 1. A single string  
 2. A list of Message objects (each with a role and content)
 
 Below are some example snippets:
 ```python
-from kg_gen import KGGen
+from kngraph import KNGraph
 
-# Initialize KGGen with optional configuration
-kg = KGGen(
+# Initialize KNGraph with optional configuration
+kg = KNGraph(
   model="openai/gpt-4o",  # Default model
   temperature=0.0,        # Default temperature
   api_key="YOUR_API_KEY"  # Optional if set in environment or using a local model
@@ -65,7 +72,7 @@ graph_1 = kg.generate(
 
 ### Visualizing KGs
 ```python
-KGGen.visualize(graph, output_path, open_in_browser=True)
+KNGraph.visualize(graph, output_path, open_in_browser=True)
 ```
 
 ![viz-tool](images/viz-tool.png)
@@ -168,8 +175,8 @@ For AI agents that need persistent memory capabilities:
 
 ```bash
 # Install and start MCP server
-pip install kg-gen
-kggen mcp
+pip install kngraph
+kngraph mcp
 
 # Use with Claude Desktop, custom MCP clients, or other AI applications
 ```
@@ -214,7 +221,7 @@ combined_graph = kg.aggregate([graph1, graph2])
 ```
 
 ### Message Array Processing
-When processing message arrays, kg-gen:
+When processing message arrays, kngraph:
 1. Preserves the role information from each message
 2. Maintains message order and boundaries
 3. Can extract entities and relationships:
@@ -242,11 +249,11 @@ And relations like:
 - (Paris, "is capital of", "France")
 
 ### Citing
-If you find KGGen useful, please consider citing:
+If you find KNGraph useful, please consider citing:
 
 ```
-@misc{mo2025kggenextractingknowledgegraphs,
-      title={KGGen: Extracting Knowledge Graphs from Plain Text with Language Models}, 
+@misc{mo2025kngraphextractingknowledgegraphs,
+      title={KNGraph: Extracting Knowledge Graphs from Plain Text with Language Models}, 
       author={Belinda Mo and Kyssen Yu and Joshua Kazdan and Joan Cabezas and Proud Mpala and Lisa Yu and Chris Cundy and Charilaos Kanatsoulis and Sanmi Koyejo},
       year={2025},
       eprint={2502.09956},

@@ -1,0 +1,3938 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Knowledge Graph Explorer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+        :root {
+            color-scheme: light;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f8fafc;
+            color: #0f172a;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 360px 1fr;
+            height: 100vh;
+            transition: grid-template-columns 0.3s ease;
+        }
+
+        .layout.sidebar-collapsed {
+            grid-template-columns: 0px 1fr;
+        }
+
+        .layout.sidebar-disabled {
+            grid-template-columns: 1fr;
+            width: 100%;
+        }
+
+        .layout.sidebar-disabled .main {
+            width: 100vw !important;
+        }
+
+        .layout.sidebar-disabled .tab-panel {
+            padding: 0 !important;
+            width: 100vw !important;
+        }
+
+        .layout.sidebar-disabled .network-panel {
+            width: 100vw !important;
+            height: 100vh !important;
+            border-radius: 0;
+            border: none;
+            max-width: none !important;
+        }
+
+        .layout.sidebar-disabled #networkCanvas {
+            width: 100vw !important;
+            height: 100vh !important;
+            max-width: none !important;
+        }
+
+        /* Force canvas to take full iframe space */
+        canvas#networkCanvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        .sidebar {
+            background: #ffffff;
+            border-right: 1px solid #e2e8f0;
+            padding: 24px 24px 16px;
+            overflow-y: auto;
+            transition: width 0.3s ease, opacity 0.3s ease;
+            display: none; /* Hidden by default - controlled by main app */
+        }
+
+        .sidebar.collapsed {
+            width: 0;
+            padding: 24px 0 16px;
+            overflow: hidden;
+            opacity: 0;
+        }
+
+        .sidebar h1 {
+            margin: 0 0 8px;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .sidebar p {
+            margin: 0 0 20px;
+            color: #475569;
+            font-size: 0.95rem;
+        }
+
+        .build-version-meta {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+            margin: -8px 0 18px;
+        }
+
+        .build-version-badge {
+            display: inline-flex;
+            align-items: center;
+            border: 1px solid #bfdbfe;
+            background: #eff6ff;
+            color: #1d4ed8;
+            border-radius: 999px;
+            padding: 6px 10px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+        }
+
+        .build-version-time {
+            font-size: 0.78rem;
+            color: #64748b;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: #f1f5f9;
+            border-radius: 12px;
+            padding: 12px;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .section {
+            margin-bottom: 24px;
+        }
+
+        .section h2 {
+            font-size: 1rem;
+            margin: 0 0 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: #1e293b;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #cbd5f5;
+            border-radius: 10px;
+            font-size: 0.95rem;
+        }
+
+        .search-hint {
+            margin-top: 6px;
+            font-size: 0.8rem;
+            color: #64748b;
+        }
+
+        .meta {
+            font-size: 0.8rem;
+            color: #64748b;
+        }
+
+        .action-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .action-row .search-input {
+            flex: 1;
+        }
+
+        .action-button {
+            border: 1px solid #cbd5e1;
+            background: #eff6ff;
+            color: #1d4ed8;
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s ease, border-color 0.2s ease;
+        }
+
+        .action-button:hover {
+            background: #dbeafe;
+            border-color: #93c5fd;
+        }
+
+        .action-button:disabled {
+            background: #f8fafc;
+            border-color: #e2e8f0;
+            color: #94a3b8;
+            cursor: not-allowed;
+        }
+
+        .list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .list-item {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 10px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+        }
+
+        .list-item strong {
+            font-weight: 600;
+        }
+
+        .cluster-item,
+        .relation-item,
+        .entity-item {
+            border-left: 4px solid transparent;
+            text-align: left;
+            cursor: pointer;
+            transition: background 0.2s ease, transform 0.2s ease;
+        }
+
+        .cluster-item:hover,
+        .relation-item:hover,
+        .entity-item:hover {
+            background: #e2e8f0;
+        }
+
+        .cluster-item.active,
+        .relation-item.active,
+        .entity-item.active {
+            transform: translateX(4px);
+            background: #e2e8f0;
+        }
+
+        .cluster-item .meta,
+        .relation-item .meta,
+        .entity-item .meta {
+            font-size: 0.8rem;
+            color: #475569;
+        }
+
+        .main {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            width: 100%;
+        }
+
+        .tab-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 16px 20px 10px;
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            position: sticky;
+            top: 0;
+            z-index: 20;
+        }
+
+        .tab {
+            border: none;
+            background: #e2e8f0;
+            color: #1e293b;
+            padding: 10px 16px;
+            border-radius: 999px;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: background 0.2s ease, color 0.2s ease;
+        }
+
+        .tab.active {
+            background: #1d4ed8;
+            color: #ffffff;
+        }
+
+        .sidebar-toggle {
+            position: absolute;
+            top: 16px;
+            right: 20px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+            z-index: 10;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            display: none; /* Hidden when sidebar is disabled */
+        }
+
+        .sidebar-toggle:hover {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+        }
+
+        .sidebar-toggle::before {
+            content: '☰';
+            margin-right: 6px;
+        }
+
+        .sidebar-toggle.collapsed::before {
+            content: '☰';
+        }
+
+        .tab-panel {
+            flex: 1;
+            display: none;
+            padding: 16px 20px;
+            overflow: hidden;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        .network-panel {
+            position: relative;
+            height: calc(100vh - 74px);
+            background: #ffffff;
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+            overflow: hidden;
+        }
+
+        .canvas-toolbar {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            z-index: 12;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 10px 12px;
+            border: 1px solid rgba(148, 163, 184, 0.45);
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.94);
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+            backdrop-filter: blur(10px);
+            max-width: calc(100% - 32px);
+        }
+
+        .toolbar-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .toolbar-label {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #1e293b;
+            white-space: nowrap;
+        }
+
+        .toolbar-range {
+            width: 140px;
+            accent-color: #2563eb;
+        }
+
+        .toolbar-value {
+            min-width: 52px;
+            text-align: right;
+            font-size: 0.82rem;
+            color: #475569;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .toolbar-button {
+            min-width: 36px;
+            height: 36px;
+            border: 1px solid #cbd5e1;
+            background: #f8fafc;
+            color: #0f172a;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+        }
+
+        .toolbar-button:hover {
+            background: #eff6ff;
+            border-color: #93c5fd;
+            transform: translateY(-1px);
+        }
+
+        #networkCanvas {
+            width: 100%;
+            height: 100%;
+            background: #ffffff;
+            border-radius: 16px;
+        }
+
+        #networkCanvas {
+            cursor: grab;
+        }
+
+        #networkCanvas:active {
+            cursor: grabbing;
+        }
+
+        .selection-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 12px;
+            font-size: 0.9rem;
+        }
+
+        .selection-card h3 {
+            margin: 0 0 8px;
+            font-size: 1rem;
+        }
+
+        .selection-card ul {
+            list-style: none;
+            padding-left: 0;
+            margin: 0;
+        }
+
+        .selection-card li {
+            margin-bottom: 4px;
+            color: #475569;
+        }
+
+        .provenance-block {
+            margin-top: 10px;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 10px;
+        }
+
+        .provenance-block h4 {
+            margin: 0 0 8px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .provenance-meta {
+            font-size: 0.78rem;
+            color: #64748b;
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+
+        .provenance-item {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 8px 10px;
+            margin-bottom: 8px;
+            font-size: 0.8rem;
+            line-height: 1.5;
+        }
+
+        .provenance-item a {
+            color: #1d4ed8;
+            word-break: break-all;
+            text-decoration: none;
+        }
+
+        .provenance-item a:hover {
+            text-decoration: underline;
+        }
+
+        .provenance-snippet {
+            margin-top: 6px;
+            color: #334155;
+            background: #f1f5f9;
+            border-radius: 6px;
+            padding: 6px 8px;
+        }
+
+        .provenance-empty {
+            font-size: 0.8rem;
+            color: #94a3b8;
+        }
+
+        .qa-panel {
+            display: grid;
+            grid-template-columns: minmax(320px, 420px) minmax(0, 1fr);
+            gap: 16px;
+            height: calc(100vh - 90px);
+        }
+
+        .glossary-panel {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 20px 22px;
+            height: calc(100vh - 90px);
+            overflow: auto;
+        }
+
+        .glossary-panel h2 {
+            margin: 0 0 6px;
+            font-size: 1.15rem;
+        }
+
+        .glossary-lead {
+            margin: 0 0 16px;
+            color: #475569;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .glossary-search {
+            width: 100%;
+            max-width: 420px;
+            padding: 10px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            font-size: 0.92rem;
+            margin-bottom: 16px;
+        }
+
+        .glossary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 12px;
+        }
+
+        .glossary-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 14px;
+        }
+
+        .glossary-card h3 {
+            margin: 0 0 6px;
+            font-size: 0.98rem;
+        }
+
+        .glossary-card h3 .en {
+            color: #64748b;
+            font-weight: 500;
+            font-size: 0.82rem;
+        }
+
+        .glossary-card p {
+            margin: 0 0 8px;
+            font-size: 0.86rem;
+            line-height: 1.6;
+            color: #334155;
+        }
+
+        .glossary-card .example {
+            font-size: 0.8rem;
+            color: #475569;
+            background: #ffffff;
+            border: 1px dashed #cbd5e1;
+            border-radius: 8px;
+            padding: 8px 10px;
+            line-height: 1.55;
+        }
+
+        .report-section {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 16px 18px;
+            margin-bottom: 14px;
+        }
+
+        .report-section h3 {
+            margin: 0 0 10px;
+            font-size: 1rem;
+        }
+
+        .report-section p,
+        .report-section li {
+            font-size: 0.88rem;
+            line-height: 1.65;
+            color: #334155;
+        }
+
+        .report-section ul,
+        .report-section ol {
+            margin: 8px 0 0;
+            padding-left: 20px;
+        }
+
+        .report-kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            margin-bottom: 4px;
+        }
+
+        .report-kpi {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 10px 12px;
+        }
+
+        .report-kpi .kpi-value {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .report-kpi .kpi-label {
+            font-size: 0.78rem;
+            color: #64748b;
+            margin-top: 2px;
+        }
+
+        .report-bar-row {
+            display: grid;
+            grid-template-columns: minmax(120px, 220px) 1fr minmax(48px, 64px);
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 6px;
+            font-size: 0.84rem;
+        }
+
+        .report-bar-track {
+            height: 10px;
+            border-radius: 999px;
+            background: #e2e8f0;
+            overflow: hidden;
+        }
+
+        .report-bar-fill {
+            height: 100%;
+            border-radius: inherit;
+        }
+
+        .report-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.84rem;
+            margin-top: 8px;
+        }
+
+        .report-table th,
+        .report-table td {
+            padding: 8px 10px;
+            border-bottom: 1px solid #e2e8f0;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        .report-table th {
+            background: #ffffff;
+            font-size: 0.78rem;
+            color: #64748b;
+        }
+
+        .report-link {
+            color: #1d4ed8;
+            text-decoration: none;
+            word-break: break-all;
+        }
+
+        .report-link:hover {
+            text-decoration: underline;
+        }
+
+        @media print {
+            .tab-bar,
+            .canvas-toolbar,
+            .sidebar-toggle,
+            #generateReportButton,
+            #printReportButton {
+                display: none !important;
+            }
+            .tab-panel {
+                display: none !important;
+            }
+            .tab-panel.active {
+                display: block !important;
+            }
+            .glossary-panel {
+                height: auto;
+                border: none;
+            }
+        }
+
+        .qa-sidebar,
+        .qa-content {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 20px;
+            overflow: auto;
+        }
+
+        .qa-sidebar h2,
+        .qa-content h2 {
+            margin: 0 0 12px;
+            font-size: 1.1rem;
+        }
+
+        .qa-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .qa-input {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            color: #0f172a;
+        }
+
+        .qa-input:focus {
+            outline: none;
+            border-color: #60a5fa;
+            box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.18);
+        }
+
+        .qa-status {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 12px 14px;
+            font-size: 0.9rem;
+            color: #334155;
+            line-height: 1.5;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+        }
+
+        .qa-status strong {
+            color: #0f172a;
+        }
+
+        .qa-status.is-loading {
+            background: linear-gradient(180deg, #eff6ff 0%, #f8fafc 100%);
+            border-color: #93c5fd;
+            box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.12);
+        }
+
+        .qa-status-progress {
+            margin-top: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .qa-status-progress-label {
+            font-size: 0.8rem;
+            color: #1d4ed8;
+            font-weight: 600;
+        }
+
+        .qa-status-progress-track {
+            position: relative;
+            overflow: hidden;
+            height: 8px;
+            border-radius: 999px;
+            background: rgba(191, 219, 254, 0.7);
+        }
+
+        .qa-status-progress-fill {
+            position: absolute;
+            inset: 0;
+            width: 42%;
+            border-radius: inherit;
+            background: linear-gradient(90deg, rgba(37, 99, 235, 0.1) 0%, #2563eb 45%, rgba(59, 130, 246, 0.35) 100%);
+            animation: qaProgressSlide 1.15s ease-in-out infinite;
+            will-change: transform;
+        }
+
+        @keyframes qaProgressSlide {
+            0% {
+                transform: translateX(-110%);
+            }
+            100% {
+                transform: translateX(260%);
+            }
+        }
+
+        .qa-url-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .qa-url-chip {
+            border: 1px solid #cbd5e1;
+            background: #f8fafc;
+            color: #334155;
+            border-radius: 999px;
+            padding: 8px 12px;
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: background 0.2s ease, border-color 0.2s ease;
+        }
+
+        .qa-url-chip:hover {
+            background: #eff6ff;
+            border-color: #93c5fd;
+        }
+
+        .qa-result-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .qa-batch {
+            border: 1px solid #dbeafe;
+            border-radius: 18px;
+            background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+            padding: 16px;
+        }
+
+        .qa-batch-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .qa-batch-title {
+            margin: 0;
+            font-size: 0.98rem;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .qa-batch-meta {
+            margin-top: 4px;
+            font-size: 0.82rem;
+            color: #64748b;
+            line-height: 1.5;
+            word-break: break-all;
+        }
+
+        .qa-batch-count {
+            white-space: nowrap;
+            border: 1px solid #bfdbfe;
+            background: #eff6ff;
+            color: #1d4ed8;
+            border-radius: 999px;
+            padding: 6px 10px;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        .qa-batch-cards {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .qa-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 16px;
+            background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+        }
+
+        .qa-question {
+            margin: 0 0 8px;
+            font-size: 1rem;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .qa-category-badge {
+            display: inline-block;
+            border: 1px solid #bfdbfe;
+            background: #eff6ff;
+            color: #1d4ed8;
+            border-radius: 999px;
+            padding: 3px 10px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .qa-answer {
+            margin: 0;
+            white-space: pre-wrap;
+            line-height: 1.65;
+            color: #334155;
+            font-size: 0.95rem;
+        }
+
+        .qa-empty {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 220px;
+            border: 1px dashed #cbd5e1;
+            border-radius: 16px;
+            color: #64748b;
+            background: #f8fafc;
+            text-align: center;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .table-container {
+            background: #ffffff;
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+            height: calc(100vh - 90px);
+            overflow: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 10px 14px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 0.9rem;
+        }
+
+        th {
+            background: #f8fafc;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 2px 10px;
+            border-radius: 999px;
+            background: #e2e8f0;
+            font-size: 0.75rem;
+            color: #0f172a;
+        }
+
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+            color: #475569;
+        }
+
+        .legend-swatch {
+            width: 12px;
+            height: 12px;
+            border-radius: 999px;
+            border: 1px solid rgba(15, 23, 42, 0.25);
+        }
+
+
+        /* Mobile/narrow iframe handling - when sidebar is disabled, use full space */
+        @media (max-width: 800px) {
+            .layout:not(.sidebar-disabled) {
+                grid-template-columns: 1fr;
+            }
+
+            .layout:not(.sidebar-disabled) .sidebar {
+                height: 280px;
+                border-right: none;
+                border-bottom: 1px solid #e2e8f0;
+            }
+
+            .layout:not(.sidebar-disabled) .main {
+                height: calc(100vh - 280px);
+            }
+
+            /* When sidebar is disabled (iframe mode), ensure full viewport usage */
+            .layout.sidebar-disabled .main {
+                width: 100% !important;
+                height: 100vh !important;
+            }
+
+            .layout.sidebar-disabled .tab-panel {
+                padding: 0 !important;
+                width: 100% !important;
+                height: 100vh !important;
+            }
+
+            .layout.sidebar-disabled .network-panel {
+                width: 100% !important;
+                height: 100vh !important;
+                border-radius: 0 !important;
+                border: none !important;
+                max-width: none !important;
+            }
+
+            .layout.sidebar-disabled #networkCanvas {
+                width: 100% !important;
+                height: 100vh !important;
+                max-width: none !important;
+            }
+
+            /* Ensure iframe canvas takes full space on mobile */
+            canvas#networkCanvas {
+                width: 100% !important;
+                height: 100% !important;
+                min-width: 100% !important;
+                min-height: 100% !important;
+            }
+
+            .qa-panel {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+
+            .qa-sidebar,
+            .qa-content {
+                min-height: 280px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="layout">
+        <aside class="sidebar">
+            <h1>지식 그래프 탐색기 | Knowledge Graph Explorer</h1>
+            <p>엔티티와 관계를 검색하고 강조해 그래프 구조를 빠르게 파악합니다. | Search, highlight, and inspect entities and relations.</p>
+            <div id="buildVersionMeta" class="build-version-meta"></div>
+            <div class="stats-grid" id="statsGrid"></div>
+            <div class="section">
+                <h2>루트 엔티티 | Root Entity</h2>
+                <input id="rootEntityInput" class="search-input" type="text" list="rootEntityList"
+                    placeholder="루트 엔티티 선택 | Select a root entity" />
+                <datalist id="rootEntityList"></datalist>
+                <div id="rootEntityRecommendations" class="list" style="margin-top: 10px;"></div>
+                <div class="action-row">
+                    <button id="selectRootButton" class="action-button" type="button">선택 | Select</button>
+                    <button id="resetRootButton" class="action-button" type="button">초기화 | Reset</button>
+                </div>
+                <div class="search-hint">차수가 높은 엔티티부터 추천합니다. 선택한 루트 엔티티의 이웃을 바로 강조하고 화면 중심으로 이동합니다. | Recommended by highest degree, then highlighted and centered.</div>
+            </div>
+            <div class="section">
+                <h2>검색 | Search</h2>
+                <input id="searchInput" class="search-input" type="text" placeholder="Search for entities or
+                    relations | 엔티티 또는 관계 검색" />
+                <div class="search-hint">일치 항목을 강조합니다. Esc 키로 초기화합니다. | Matches are highlighted. Press Escape to clear.</div>
+            </div>
+            <div class="section" id="selectionSection">
+                <h2>선택 정보 | Selection</h2>
+                <div id="selectionDetails" class="selection-card">네트워크에서 노드나 관계를 클릭해 상세 정보를 확인하세요. | Click a node or relation in the network to inspect details.</div>
+                <div class="action-row">
+                    <button id="centerSelectedEntityButton" class="action-button" type="button" disabled>엔티티 중앙 이동 | Center Entity</button>
+                </div>
+            </div>
+            <div class="section">
+                <h2>엔티티 클러스터 | Entity Clusters</h2>
+                <div id="clusterProvenanceNote" class="meta" style="margin-bottom: 8px;"></div>
+                <div id="clusterList" class="list"></div>
+            </div>
+            <div class="section">
+                <h2>주요 엔티티 | Top Entities</h2>
+                <div id="topEntities" class="list"></div>
+            </div>
+            <div class="section">
+                <h2>주요 관계 | Top Relations</h2>
+                <div id="topRelations" class="list"></div>
+            </div>
+        </aside>
+        <main class="main">
+            <button class="sidebar-toggle" id="sidebarToggle" title="사이드바 전환 | Toggle sidebar"></button>
+            <div class="tab-bar" style="padding-bottom: 10px;">
+                <button class="tab active" data-tab="network">네트워크 | Network</button>
+                <button class="tab" data-tab="qa">Q&A</button>
+                <button class="tab" data-tab="report">리포트 | Report</button>
+                <button class="tab" data-tab="entities">엔티티 분류 | Entities</button>
+                <button class="tab" data-tab="relations">관계 분류 | Relations</button>
+                <button class="tab" data-tab="glossary">용어집 | Glossary</button>
+            </div>
+            <section id="network" class="tab-panel active">
+                <div class="network-panel">
+                    <div class="canvas-toolbar" aria-label="노드 크기 조절 | Node size controls">
+                        <div class="toolbar-group">
+                            <span class="toolbar-label">노드 크기 | Node Size</span>
+                            <button id="decreaseNodeSizeButton" class="toolbar-button" type="button" title="축소 | Decrease">-</button>
+                            <input id="nodeSizeSlider" class="toolbar-range" type="range" min="0.3" max="3" step="0.1" value="1" />
+                            <button id="increaseNodeSizeButton" class="toolbar-button" type="button" title="확대 | Increase">+</button>
+                            <button id="resetNodeSizeButton" class="toolbar-button" type="button" title="기본값 | Reset">1x</button>
+                            <span id="nodeSizeValue" class="toolbar-value">100%</span>
+                        </div>
+                        <div class="toolbar-group">
+                            <span class="toolbar-label">표시 엔티티 | Visible Entities</span>
+                            <input id="visibleEntitySlider" class="toolbar-range" type="range" min="0.1" max="1" step="0.1" value="0.5" />
+                            <button id="resetVisibleEntityButton" class="toolbar-button" type="button" title="전체 표시 | Show all">All</button>
+                            <span id="visibleEntityValue" class="toolbar-value">50%</span>
+                        </div>
+                    </div>
+                    <canvas id="networkCanvas"></canvas>
+                </div>
+            </section>
+            <section id="qa" class="tab-panel">
+                <div class="qa-panel">
+                    <aside class="qa-sidebar">
+                        <h2>URL 기반 Q&A | URL-Centered Q&A</h2>
+                        <div class="qa-controls">
+                            <div class="action-row" style="margin-top: 0; align-items: center;" role="radiogroup" aria-label="Q&A 프로바이더 | Q&A provider">
+                                <span class="meta" style="white-space: nowrap;">프로바이더 | Provider</span>
+                                <label class="meta" style="display: inline-flex; align-items: center; gap: 4px; cursor: pointer;">
+                                    <input type="radio" name="qaProvider" value="openai" checked /> OpenAI
+                                </label>
+                                <label class="meta" style="display: inline-flex; align-items: center; gap: 4px; cursor: pointer;">
+                                    <input type="radio" name="qaProvider" value="openrouter" /> OpenRouter
+                                </label>
+                            </div>
+                            <input id="qaApiKeyInput" class="qa-input" type="password" placeholder="OpenAI API 키 입력 | Enter OpenAI API key (브라우저에만 저장)" autocomplete="off" />
+                            <div class="action-row" style="margin-top: 0; align-items: center;">
+                                <label for="qaModelInput" class="meta" style="white-space: nowrap;">모델 | Model</label>
+                                <input id="qaModelInput" class="qa-input" type="text" value="gpt-5.6-luna" placeholder="gpt-5.6-luna" />
+                            </div>
+                            <div class="action-row" style="margin-top: 0; align-items: center;">
+                                <label for="qaCountInput" class="meta" style="white-space: nowrap;">생성 개수 | Count (1–30)</label>
+                                <input id="qaCountInput" class="qa-input" type="number" min="1" max="30" step="1" value="10" style="max-width: 110px;" />
+                            </div>
+                            <div class="action-row" style="margin-top: 0; align-items: center;" role="radiogroup" aria-label="Q&A 생성 기준 | Q&A focus">
+                                <span class="meta" style="white-space: nowrap;">생성 기준 | Focus</span>
+                                <label class="meta" style="display: inline-flex; align-items: center; gap: 4px; cursor: pointer;">
+                                    <input type="radio" name="qaFocus" value="page" checked /> 페이지 전체 | Page
+                                </label>
+                                <label class="meta" style="display: inline-flex; align-items: center; gap: 4px; cursor: pointer;">
+                                    <input type="radio" name="qaFocus" value="entity" /> 선택 엔티티 | Entity
+                                </label>
+                                <label class="meta" style="display: inline-flex; align-items: center; gap: 4px; cursor: pointer;">
+                                    <input type="radio" name="qaFocus" value="relation" /> 선택 관계 | Relation
+                                </label>
+                                <label class="meta" style="display: inline-flex; align-items: center; gap: 4px; cursor: pointer;" title="브랜드명을 직접 묻지 않고 니즈로 묻되 답변에서 자사 정보가 인용되도록 유도">
+                                    <input type="radio" name="qaFocus" value="indirect" /> 간접 질문 | Indirect
+                                </label>
+                            </div>
+                            <div class="action-row" style="margin-top: 0;">
+                                <button id="generateQaButton" class="action-button" type="button">Q&A 생성 | Generate Q&A</button>
+                            </div>
+                            <div id="qaStatus" class="qa-status">
+                                <strong>준비됨 | Ready</strong><br />
+                                - API 키를 입력하면 서버 없이 브라우저에서 직접 생성합니다 (키는 localStorage에만 저장).
+                                <br />- 생성 기준을 선택하세요: 페이지 전체 / 선택 엔티티 / 선택 관계.
+                                <br />- 엔티티·관계 기준은 그래프에서 해당 항목을 먼저 선택해야 합니다.
+                                <br />생성 버튼을 누르면 수집된 원문을 기준으로 바로 생성됩니다.
+                            </div>
+                        </div>
+                    </aside>
+                    <section class="qa-content">
+                        <h2>생성된 Q&A | Generated Q&A</h2>
+                        <div id="qaResults" class="qa-empty">
+                            생성 기준을 선택하고 생성 버튼을 눌러 Q&A를 생성하세요.
+                            <br />- "페이지 전체": 수집된 전체 원문을 기반으로 일반적인 질문/답변을 생성합니다.
+                            <br />- "선택 엔티티": 그래프에서 선택한 엔티티에 초점을 맞춘 질문/답변을 생성합니다.
+                            <br />- "선택 관계": 그래프에서 선택한 관계(출발 → 서술어 → 도착)에 초점을 맞춘 질문/답변을 생성합니다.
+                        </div>
+                    </section>
+                </div>
+            </section>
+            <section id="report" class="tab-panel">
+                <div class="glossary-panel" id="reportPanel">
+                    <h2>엔티티 온톨로지 리포트 | Entity Ontology Report</h2>
+                    <p class="glossary-lead">엔티티와 관계를 기점으로 페이지 정보가 어떻게 이해되고 있는지 요약합니다. 아래 버튼으로 최신 그래프 기준 리포트를 생성하세요. | Summarizes how page information is understood through entities and relations.</p>
+                    <div class="action-row" style="margin-top: 0; margin-bottom: 16px;">
+                        <button id="generateReportButton" class="action-button" type="button">리포트 생성 | Generate Report</button>
+                        <button id="printReportButton" class="action-button" type="button">인쇄 / PDF 저장 | Print</button>
+                    </div>
+                    <div id="reportStatus" class="qa-status" style="margin-bottom: 16px;">
+                        <strong>준비됨 | Ready</strong><br />"리포트 생성" 버튼을 누르면 그래프 전체를 분석한 리포트가 표시됩니다.
+                    </div>
+                    <div id="reportContent"></div>
+                </div>
+            </section>
+            <section id="entities" class="tab-panel">
+                <div class="glossary-panel">
+                    <h2>엔티티 분류 | Entity Classes</h2>
+                    <p class="glossary-lead">미분류 · 대표 엔티티 · 루트 엔티티 · 고립 엔티티를 분류별로 모아봅니다. 항목을 클릭하면 네트워크에서 선택·강조됩니다. | Browse unclustered, representative, root, and isolated entities. Click an item to select it in the network.</p>
+                    <input id="entityClassSearchInput" class="glossary-search" type="text" placeholder="엔티티 검색 | Search entities" />
+                    <div id="entityClassSummary" class="glossary-grid" style="margin-bottom: 16px;"></div>
+                    <div id="entityClassGroups"></div>
+                </div>
+            </section>
+            <section id="relations" class="tab-panel">
+                <div class="glossary-panel">
+                    <h2>관계 분류 | Relation Classes</h2>
+                    <p class="glossary-lead">서술어(관계 유형)별 · 엣지 클러스터별 · 근거 유무별로 관계를 모아봅니다. 항목을 클릭하면 네트워크에서 해당 관계가 선택되고 상세 정보와 물리적 출처가 표시됩니다. | Browse relations by predicate, edge cluster, and evidence. Click an item to select it in the network with details and provenance.</p>
+                    <input id="relationClassSearchInput" class="glossary-search" type="text" placeholder="관계 검색 | Search relations (예: 할인, predicate)" />
+                    <div id="relationClassSummary" class="glossary-grid" style="margin-bottom: 16px;"></div>
+                    <div id="relationClassGroups"></div>
+                </div>
+            </section>
+            <section id="glossary" class="tab-panel">
+                <div class="glossary-panel">
+                    <h2>용어집 | Glossary</h2>
+                    <p class="glossary-lead">선택 정보 패널과 그래프에 나오는 핵심 용어를 한곳에 모았습니다. 검색으로 용어를 찾아보세요. | Key terms used across the selection panel and graph, searchable in one place.</p>
+                    <input id="glossarySearchInput" class="glossary-search" type="text" placeholder="용어 검색 | Search terms (예: 차수, degree, 클러스터)" />
+                    <div id="glossaryGrid" class="glossary-grid"></div>
+                </div>
+            </section>
+        </main>
+    </div>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script id="viz-data" type="application/json">
+<!--DATA-->
+    </script>
+    <script>
+        (function () {
+            console.log('[iframe] Script starting - mobile check:', window.innerWidth <= 768);
+            console.log('[iframe] User agent:', navigator.userAgent);
+
+            const dataElement = document.getElementById('viz-data');
+            if (!dataElement) {
+                console.error('[iframe] viz-data element not found!');
+                return;
+            }
+
+            let vizData;
+            try {
+                vizData = JSON.parse(dataElement.textContent);
+                console.log('[iframe] Data parsed successfully:', vizData.nodes?.length, 'nodes');
+            } catch (e) {
+                console.error('[iframe] Failed to parse data:', e);
+                return;
+            }
+
+            const uiLimits = vizData.ui || {
+                rootEntitySuggestionLimit: 30,
+                clusterSuggestionLimit: 30,
+                relationSuggestionLimit: 20,
+            };
+
+            const state = {
+                activeElement: null,
+                focusCluster: null,
+                focusPredicate: null,
+                searchTerm: '',
+                rootEntityId: null,
+                sidebarCollapsed: false,
+                sidebarDisabled: false,
+                nodeScale: 1,
+                visibleEntityRatio: 0.5,
+                qaLoading: false,
+                qaHistory: []
+            };
+
+            const NODE_SCALE_MIN = 0.3;
+            const NODE_SCALE_MAX = 3;
+            const NODE_SCALE_STEP = 0.1;
+            const VISIBLE_ENTITY_RATIO_MIN = 0.1;
+            const VISIBLE_ENTITY_RATIO_MAX = 1;
+            const VISIBLE_ENTITY_RATIO_STEP = 0.1;
+
+            const nodeById = Object.fromEntries(vizData.nodes.map(node => [node.id, node]));
+            const edgeById = Object.fromEntries(vizData.edges.map(edge => [edge.id, edge]));
+            const clusterById = Object.fromEntries(vizData.clusters.map(cluster => [cluster.id, cluster]));
+            const selectableEntities = [...vizData.nodes]
+                .sort((left, right) => {
+                    if (right.degree !== left.degree) {
+                        return right.degree - left.degree;
+                    }
+                    return left.label.localeCompare(right.label, 'ko');
+                });
+
+            let visibleNodeIds = new Set();
+            let visibleNodesData = [];
+            let visibleEdgesData = [];
+            let visibleClusterData = [];
+            let visibleEdgesByPredicate = {};
+            let visibleNodesByCluster = {};
+            const sourceDocuments = [...(vizData.sourceDocuments || [])];
+            const qaRuntime = vizData.qaRuntime || { enabled: false, endpoint: null, model: null };
+            const buildInfo = vizData.buildInfo || { series: null, build: null, version: null, builtAt: null };
+
+            function renderBuildVersion() {
+                const container = document.getElementById('buildVersionMeta');
+                if (!container) {
+                    return;
+                }
+
+                if (!buildInfo.version) {
+                    container.innerHTML = '';
+                    return;
+                }
+
+                let builtAtText = '';
+                if (buildInfo.builtAt) {
+                    const builtAtDate = new Date(buildInfo.builtAt);
+                    if (!Number.isNaN(builtAtDate.getTime())) {
+                        builtAtText = builtAtDate.toLocaleString('ko-KR');
+                    }
+                }
+
+                container.innerHTML = `
+                    <span class="build-version-badge">Build ${buildInfo.version}</span>
+                    ${builtAtText ? `<span class="build-version-time">생성 시각: ${builtAtText}</span>` : ''}
+                `;
+            }
+
+            function extractSentences(text, count = 3) {
+                return text
+                    .replace(/\s+/g, ' ')
+                    .split(/(?<=[.!?。！？])\s+|\n+/)
+                    .map(sentence => sentence.trim())
+                    .filter(Boolean)
+                    .slice(0, count);
+            }
+
+            function dedupeStrings(values = []) {
+                const seen = new Set();
+                return values.filter(value => {
+                    if (typeof value !== 'string') {
+                        return false;
+                    }
+
+                    const normalizedValue = value.trim();
+                    if (!normalizedValue || seen.has(normalizedValue)) {
+                        return false;
+                    }
+
+                    seen.add(normalizedValue);
+                    return true;
+                });
+            }
+
+            function extractRelevantSentences(text, terms = [], limit = 3) {
+                const normalizedTerms = dedupeStrings(terms.map(term => term.toLowerCase()));
+                const sentences = text
+                    .replace(/\s+/g, ' ')
+                    .split(/(?<=[.!?。！？])\s+|\n+/)
+                    .map(sentence => sentence.trim())
+                    .filter(Boolean);
+
+                if (!normalizedTerms.length) {
+                    return sentences.slice(0, limit);
+                }
+
+                const ranked = sentences
+                    .map(sentence => {
+                        const loweredSentence = sentence.toLowerCase();
+                        const score = normalizedTerms.reduce((total, term) => (
+                            total + (loweredSentence.includes(term) ? term.length + 1 : 0)
+                        ), 0);
+                        return { sentence, score };
+                    })
+                    .filter(item => item.score > 0)
+                    .sort((left, right) => right.score - left.score);
+
+                const topRanked = ranked.slice(0, limit).map(item => item.sentence);
+                return topRanked.length ? topRanked : sentences.slice(0, limit);
+            }
+
+            function findMentionedEntities(text) {
+                const loweredText = text.toLowerCase();
+                return [...vizData.nodes]
+                    .filter(node => node.label && loweredText.includes(node.label.toLowerCase()))
+                    .sort((left, right) => {
+                        if (right.degree !== left.degree) {
+                            return right.degree - left.degree;
+                        }
+                        return right.label.length - left.label.length;
+                    });
+            }
+
+            function formatRelationTriples(relations, limit = 5) {
+                if (!relations.length) {
+                    return '직접 연결된 관계를 충분히 찾지 못했습니다. | Not enough direct graph relations were found.';
+                }
+
+                return relations
+                    .slice(0, limit)
+                    .map(relation => `- ${relation.source} -> ${relation.predicate} -> ${relation.target}`)
+                    .join('\n');
+            }
+
+            function collectRelatedEntities(entities) {
+                const relatedEntities = new Map();
+
+                entities.forEach(entity => {
+                    const node = nodeById[entity.id];
+                    (node?.neighbors || []).forEach(neighbor => {
+                        const neighborNode = nodeById[neighbor];
+                        if (!neighborNode) {
+                            return;
+                        }
+                        const current = relatedEntities.get(neighborNode.id) || 0;
+                        relatedEntities.set(neighborNode.id, current + neighborNode.degree + 1);
+                    });
+                });
+
+                entities.forEach(entity => relatedEntities.delete(entity.id));
+
+                return [...relatedEntities.entries()]
+                    .sort((left, right) => right[1] - left[1])
+                    .slice(0, 6)
+                    .map(([entityId]) => entityId);
+            }
+
+            function getQaCount() {
+                const input = document.getElementById('qaCountInput');
+                const parsed = Number.parseInt(input?.value, 10);
+                if (Number.isNaN(parsed)) {
+                    return 10;
+                }
+                return Math.min(30, Math.max(1, parsed));
+            }
+
+            function getQaFocus() {
+                const checked = document.querySelector('input[name="qaFocus"]:checked');
+                const value = checked?.value || 'page';
+                return ['page', 'entity', 'relation', 'indirect'].includes(value) ? value : 'page';
+            }
+
+            function buildQaGenerationPayload(inputUrl, sourceDocument, selectedEntityId = null, selectedEdgeId = null) {
+                const sourceText = sourceDocument.text || '';
+                const mentionedEntities = findMentionedEntities(sourceText);
+                const selectedEntity = selectedEntityId ? nodeById[selectedEntityId] : null;
+                const selectedEdge = selectedEdgeId ? edgeById[selectedEdgeId] : null;
+                const focus = getQaFocus();
+
+                let focusEntities = mentionedEntities;
+                let relatedRelations = [];
+                let selectedRelation = null;
+
+                if (focus === 'relation' && selectedEdge) {
+                    const sourceNode = nodeById[selectedEdge.source];
+                    const targetNode = nodeById[selectedEdge.target];
+                    const endpointNodes = [sourceNode, targetNode].filter(Boolean);
+                    focusEntities = [
+                        ...endpointNodes,
+                        ...mentionedEntities.filter(entity => (
+                            entity.id !== selectedEdge.source && entity.id !== selectedEdge.target
+                        )),
+                    ];
+                    selectedRelation = {
+                        source: selectedEdge.source,
+                        predicate: selectedEdge.predicate,
+                        target: selectedEdge.target,
+                    };
+                    const endpointIds = new Set([selectedEdge.source, selectedEdge.target]);
+                    relatedRelations = [
+                        {
+                            source: selectedEdge.source,
+                            predicate: selectedEdge.predicate,
+                            target: selectedEdge.target,
+                        },
+                        ...vizData.relations.filter(relation => (
+                            relation.edgeId !== selectedEdge.id
+                            && (endpointIds.has(relation.source) || endpointIds.has(relation.target))
+                        )),
+                    ];
+                } else {
+                    focusEntities = selectedEntity
+                        ? [selectedEntity, ...mentionedEntities.filter(entity => entity.id !== selectedEntity.id)]
+                        : mentionedEntities;
+                    const primaryEntityIds = new Set(focusEntities.slice(0, 8).map(entity => entity.id));
+                    relatedRelations = vizData.relations.filter(relation => (
+                        primaryEntityIds.has(relation.source) || primaryEntityIds.has(relation.target)
+                    ));
+                }
+
+                const primaryEntities = focusEntities.slice(0, 8);
+
+                return {
+                    inputUrl,
+                    sourceDocument,
+                    qaCount: getQaCount(),
+                    qaFocus: focus,
+                    selectedEntityLabel: selectedEntity?.label || selectedRelation?.source || '',
+                    selectedRelation,
+                    focusEntities: primaryEntities.map(entity => entity.label),
+                    relatedRelations: relatedRelations.slice(0, 12),
+                    evidenceSentences: extractRelevantSentences(
+                        sourceText,
+                        primaryEntities.map(entity => entity.label),
+                        4,
+                    ),
+                };
+            }
+
+            const QA_DIRECT_API_URLS = {
+                openai: 'https://api.openai.com/v1/responses',
+                openrouter: 'https://openrouter.ai/api/v1/responses',
+            };
+            const QA_SOURCE_TEXT_LIMIT = 6000;
+
+            function getQaProvider() {
+                const checked = document.querySelector('input[name="qaProvider"]:checked');
+                const value = checked?.value || 'openai';
+                return value === 'openrouter' ? 'openrouter' : 'openai';
+            }
+
+            function getQaApiKeyStorageKey(provider) {
+                return provider === 'openrouter' ? 'kgQaApiKeyOpenRouter' : 'kgQaApiKey';
+            }
+
+            function getQaApiKey(provider) {
+                const active = provider || getQaProvider();
+                const input = document.getElementById('qaApiKeyInput');
+                const typed = (input?.value || '').trim();
+                if (typed && active === getQaProvider()) {
+                    return typed;
+                }
+                try {
+                    return (localStorage.getItem(getQaApiKeyStorageKey(active)) || '').trim();
+                } catch (error) {
+                    return '';
+                }
+            }
+
+            function getQaModel() {
+                const input = document.getElementById('qaModelInput');
+                const typed = (input?.value || '').trim().replace(/^openai\//, '');
+                if (typed) {
+                    return typed;
+                }
+                const runtimeModel = String(qaRuntime.model || '').replace(/^openai\//, '');
+                return runtimeModel || 'gpt-5.6-luna';
+            }
+
+            function saveQaSettings() {
+                try {
+                    const keyInput = document.getElementById('qaApiKeyInput');
+                    const modelInput = document.getElementById('qaModelInput');
+                    const provider = getQaProvider();
+                    if (keyInput && keyInput.value.trim()) {
+                        localStorage.setItem(getQaApiKeyStorageKey(provider), keyInput.value.trim());
+                    }
+                    if (modelInput && modelInput.value.trim()) {
+                        localStorage.setItem('kgQaModel', modelInput.value.trim());
+                    }
+                    localStorage.setItem('kgQaProvider', provider);
+                } catch (error) {
+                }
+            }
+
+            function loadQaSettings() {
+                try {
+                    const keyInput = document.getElementById('qaApiKeyInput');
+                    const modelInput = document.getElementById('qaModelInput');
+                    const savedProvider = localStorage.getItem('kgQaProvider');
+                    if (savedProvider === 'openrouter' || savedProvider === 'openai') {
+                        const radio = document.querySelector(`input[name="qaProvider"][value="${savedProvider}"]`);
+                        if (radio) {
+                            radio.checked = true;
+                        }
+                    }
+                    const provider = getQaProvider();
+                    const savedKey = localStorage.getItem(getQaApiKeyStorageKey(provider)) || '';
+                    const savedModel = localStorage.getItem('kgQaModel') || '';
+                    if (keyInput) {
+                        keyInput.value = savedKey;
+                        keyInput.placeholder = provider === 'openrouter'
+                            ? 'OpenRouter API 키 입력 | Enter OpenRouter API key (브라우저에만 저장)'
+                            : 'OpenAI API 키 입력 | Enter OpenAI API key (브라우저에만 저장)';
+                    }
+                    if (modelInput) {
+                        if (savedModel) {
+                            modelInput.value = savedModel;
+                        } else if (qaRuntime.model) {
+                            modelInput.value = String(qaRuntime.model).replace(/^openai\//, '');
+                        }
+                    }
+                } catch (error) {
+                }
+            }
+
+            function extractQaResponseText(data) {
+                if (typeof data?.output_text === 'string' && data.output_text.trim()) {
+                    return data.output_text;
+                }
+                const outputs = data?.output;
+                if (Array.isArray(outputs)) {
+                    for (let i = outputs.length - 1; i >= 0; i--) {
+                        const contents = outputs[i]?.content;
+                        if (!Array.isArray(contents)) {
+                            continue;
+                        }
+                        for (const item of contents) {
+                            if (typeof item?.text === 'string' && item.text.trim()) {
+                                return item.text;
+                            }
+                        }
+                    }
+                }
+                throw new Error('모델 응답에서 JSON 텍스트를 찾을 수 없습니다.');
+            }
+
+            const QA_CATEGORY_DEFINITIONS = [
+                { id: 'direct', label: '직접 질문', en: 'Direct', desc: '페이지 주제를 직접 묻는 질문 (예: 혜택이 뭐야, 얼마야, 어떻게 신청해)', share: 0.3 },
+                { id: 'comparison', label: '비교 질문', en: 'Comparison', desc: '대안·경쟁·이전 방식과 비교하는 질문 (예: A와 B 중 뭐가 나아, 기존 방식과 뭐가 달라)', share: 0.2 },
+                { id: 'situation', label: '상황·유즈케이스 질문', en: 'Situational', desc: '특정 상황·조건에서의 적용을 묻는 질문 (예: 이런 경우에도 돼, 누구에게 좋아)', share: 0.2 },
+                { id: 'howto', label: '방법·절차 질문', en: 'How-to', desc: '이용 방법·절차·주의사항을 묻는 질문 (예: 어떻게 해, 뭐가 필요해, 주의할 점은)', share: 0.2 },
+                { id: 'value', label: '가치·의사결정 질문', en: 'Value', desc: '할 만한지·이득인지를 묻는 질문 (예: 할 만해, 이득이야, 왜 해야 해)', share: 0.1 },
+            ];
+
+            function allocateQaCategoryCounts(qaCount) {
+                if (qaCount < QA_CATEGORY_DEFINITIONS.length) {
+                    return QA_CATEGORY_DEFINITIONS.slice(0, qaCount).map(category => ({ ...category, count: 1 }));
+                }
+                const allocations = [];
+                let remaining = qaCount;
+                QA_CATEGORY_DEFINITIONS.forEach((category, index) => {
+                    let count;
+                    if (index === QA_CATEGORY_DEFINITIONS.length - 1) {
+                        count = remaining;
+                    } else {
+                        count = Math.min(remaining, Math.round(qaCount * category.share));
+                        remaining -= count;
+                        if (index === 0 && qaCount > 0 && count === 0) {
+                            count = 1;
+                            remaining -= 1;
+                        }
+                    }
+                    allocations.push({ ...category, count });
+                });
+                const total = allocations.reduce((sum, item) => sum + item.count, 0);
+                if (total < qaCount) {
+                    allocations[0].count += qaCount - total;
+                } else if (total > qaCount) {
+                    let overflow = total - qaCount;
+                    for (let i = allocations.length - 1; i >= 0 && overflow > 0; i--) {
+                        const reducible = Math.min(allocations[i].count, overflow);
+                        allocations[i].count -= reducible;
+                        overflow -= reducible;
+                    }
+                }
+                return allocations.filter(item => item.count > 0);
+            }
+
+            function qaCategoryLabel(categoryId) {
+                const found = QA_CATEGORY_DEFINITIONS.find(item => item.id === categoryId);
+                return found ? `${found.label} | ${found.en}` : categoryId;
+            }
+
+            async function requestQaDirect(payload) {
+                const provider = getQaProvider();
+                const apiKey = getQaApiKey(provider);
+                if (!apiKey) {
+                    const label = provider === 'openrouter' ? 'OpenRouter' : 'OpenAI';
+                    throw new Error(`${label} API 키를 먼저 입력하세요. | Enter a ${label} API key first.`);
+                }
+                const model = getQaModel();
+                const qaCount = payload.qaCount;
+                const categoryCounts = allocateQaCategoryCounts(qaCount);
+                const validCategoryIds = new Set(categoryCounts.map(item => item.id));
+                const fallbackCategory = categoryCounts.length ? categoryCounts[0].id : 'direct';
+                const categoryGuidance = categoryCounts
+                    .map((item, index) => `${index + 1}. category="${item.id}" ${item.count}개 - ${item.label}: ${item.desc}`)
+                    .join('\n');
+                const focusText = (payload.focusEntities || []).length
+                    ? payload.focusEntities.map(entity => `- ${entity}`).join('\n')
+                    : '- 없음';
+                const relationLines = (payload.relatedRelations || []).length
+                    ? payload.relatedRelations.map(relation => `- ${relation.source} -> ${relation.predicate} -> ${relation.target}`).join('\n')
+                    : '- 없음';
+                const schema = {
+                    type: 'object',
+                    properties: {
+                        qa_pairs: {
+                            type: 'array',
+                            minItems: qaCount,
+                            maxItems: qaCount,
+                            items: {
+                                type: 'object',
+                                properties: {
+                                    question: { type: 'string' },
+                                    answer: { type: 'string' },
+                                    category: { type: 'string' },
+                                },
+                                required: ['question', 'answer', 'category'],
+                                additionalProperties: false,
+                            },
+                        },
+                    },
+                    required: ['qa_pairs'],
+                    additionalProperties: false,
+                };
+                const focusLabels = { page: '페이지 전체', entity: '선택 엔티티', relation: '선택 관계', indirect: '간접 질문' };
+                const focusLabel = focusLabels[payload.qaFocus] || '페이지 전체';
+                const selectedRelation = payload.selectedRelation;
+                const selectedRelationText = selectedRelation
+                    ? `${selectedRelation.source} -> ${selectedRelation.predicate} -> ${selectedRelation.target}`
+                    : '없음';
+                const systemPrompt = (
+                    'You are Luna, an AEO/GEO question strategist. '
+                    + `Write ${qaCount} Korean questions covering both `
+                    + 'direct brand queries and indirect queries (comparisons, situations, how-tos, value judgments), '
+                    + 'following the category counts below. '
+                    + `Generation focus is "${focusLabel}". When focus is a selected entity, center questions on it. `
+                    + 'When focus is a selected relation, center questions on that triple (source, predicate, target) '
+                    + 'and its endpoint neighborhoods. '
+                    + 'When focus is indirect ("간접 질문"), do NOT name the page brand or product in the question. '
+                    + 'Ask need-based questions (e.g. "쇼핑 혜택이 좋은 멤버십 추천해줘") so that the answer naturally '
+                    + 'cites this page as the solution. '
+                    + 'Use only the provided page content and graph context. Do not invent facts. '
+                    + 'Answers must be concise, direct, quotable, and grounded in the source (2-4 sentences). '
+                    + 'Tag each pair with exactly one category id: '
+                    + categoryCounts.map(item => `${item.id} (${item.label})`).join(', ')
+                    + '.'
+                );
+                const userPrompt = [
+                    '입력 URL:',
+                    payload.inputUrl || '',
+                    '',
+                    '매칭된 소스 URL:',
+                    payload.sourceDocument?.url || '',
+                    '',
+                    '생성 기준:',
+                    focusLabel,
+                    '',
+                    '선택 엔티티:',
+                    payload.selectedEntityLabel || '없음',
+                    '',
+                    '선택 관계:',
+                    selectedRelationText,
+                    '',
+                    '페이지 핵심 엔티티 후보:',
+                    focusText,
+                    '',
+                    '그래프 관계 참고:',
+                    relationLines,
+                    '',
+                    '페이지 원문:',
+                    '<source>',
+                    String(payload.sourceDocument?.text || '').slice(0, QA_SOURCE_TEXT_LIMIT),
+                    '</source>',
+                    '',
+                    '요구사항:',
+                    '- 일반 사용자가 실제로 궁금해할 질문으로 구성',
+                    '- FAQ나 AI 답변에 바로 사용할 수 있는 명확한 질문/답변',
+                    '- 마케팅 문구보다 정보 전달 우선',
+                    '- 답변은 원문과 그래프 문맥을 함께 반영',
+                    '- 생성 기준이 "선택 관계"이면 해당 관계 triple을 중심으로 질문을 구성',
+                    '- 생성 기준이 "간접 질문"이면 질문에 브랜드·상품명을 직접 언급하지 말고 니즈 중심으로 묻되, 답변에서는 이 페이지 정보가 인용되도록 구성',
+                    '- AEO/GEO 노출을 위해 직접 질문뿐 아니라 간접 질문(비교·상황·방법·가치)도 포함',
+                    '- 아래 카테고리별 개수를 정확히 준수하고 각 쌍의 category 필드에 아래 id 중 하나를 그대로 사용',
+                    '',
+                    '카테고리별 개수:',
+                    categoryGuidance,
+                ].join('\n');
+                const response = await fetch(QA_DIRECT_API_URLS[provider], {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${apiKey}`,
+                        ...(provider === 'openrouter' ? { 'HTTP-Referer': location.href, 'X-Title': 'kngraph-qa' } : {}),
+                    },
+                    body: JSON.stringify({
+                        model,
+                        input: [
+                            { role: 'system', content: systemPrompt },
+                            { role: 'user', content: userPrompt },
+                        ],
+                        text: {
+                            format: {
+                                type: 'json_schema',
+                                name: 'qa_pairs_response',
+                                schema,
+                                strict: true,
+                            },
+                        },
+                    }),
+                });
+                const result = await response.json().catch(() => ({}));
+                if (!response.ok) {
+                    throw new Error(result?.error?.message || `Q&A 요청 실패 (HTTP ${response.status})`);
+                }
+                const parsed = JSON.parse(extractQaResponseText(result));
+                return (parsed.qa_pairs || [])
+                    .filter(item => item?.question && item?.answer)
+                    .map(item => ({
+                        question: String(item.question).trim(),
+                        answer: String(item.answer).trim(),
+                        category: validCategoryIds.has(String(item.category || '').trim())
+                            ? String(item.category).trim()
+                            : fallbackCategory,
+                    }));
+            }
+
+            async function requestModelGeneratedQa(inputUrl, sourceDocument, selectedEntityId = null, selectedEdgeId = null) {
+                const payload = buildQaGenerationPayload(inputUrl, sourceDocument, selectedEntityId, selectedEdgeId);
+                if (getQaApiKey()) {
+                    return requestQaDirect(payload);
+                }
+                if (qaRuntime.enabled && qaRuntime.endpoint) {
+                    const response = await fetch(`${qaRuntime.endpoint}/qa`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(payload),
+                    });
+
+                    const result = await response.json();
+                    if (!response.ok || !result.ok) {
+                        throw new Error(result.error || 'Failed to generate Q&A');
+                    }
+
+                    return result.qaPairs || [];
+                }
+                throw new Error('API 키를 입력하세요. 키는 브라우저 localStorage에만 저장됩니다. | Enter an API key (stored only in browser localStorage).');
+            }
+
+            function appendQaHistory(entry) {
+                state.qaHistory = [entry, ...state.qaHistory];
+            }
+
+            function renderQaResults(qaPairs, metadata = null) {
+                const results = document.getElementById('qaResults');
+                if (!qaPairs.length && !state.qaHistory.length) {
+                    results.className = 'qa-empty';
+                    results.innerHTML = 'Q&A를 생성할 수 있는 충분한 원문 또는 그래프 단서를 찾지 못했습니다. | Not enough source or graph evidence was found to generate Q&A.';
+                    return;
+                }
+
+                if (qaPairs.length && metadata) {
+                    appendQaHistory({
+                        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+                        createdAt: new Date(),
+                        sourceUrl: metadata.sourceUrl || '',
+                        inputUrl: metadata.inputUrl || '',
+                        model: metadata.model || '',
+                        qaPairs,
+                    });
+                }
+
+                if (!state.qaHistory.length) {
+                    results.className = 'qa-empty';
+                    results.innerHTML = 'Q&A를 생성할 수 있는 충분한 원문 또는 그래프 단서를 찾지 못했습니다. | Not enough source or graph evidence was found to generate Q&A.';
+                    return;
+                }
+
+                results.className = 'qa-result-list';
+                results.innerHTML = state.qaHistory
+                    .map((entry, index) => `
+                        <section class="qa-batch" data-qa-batch="${entry.id}">
+                            <div class="qa-batch-header">
+                                <div>
+                                    <h3 class="qa-batch-title">생성 배치 ${state.qaHistory.length - index} | Generation Batch ${state.qaHistory.length - index}</h3>
+                                    <div class="qa-batch-meta">
+                                        생성 시각: ${entry.createdAt.toLocaleString('ko-KR')}<br />
+                                        입력 URL: ${entry.inputUrl || '-'}<br />
+                                        기준 URL: ${entry.sourceUrl || '-'}${entry.model ? `<br />모델: ${entry.model}` : ''}
+                                    </div>
+                                </div>
+                                <div class="qa-batch-count">${entry.qaPairs.length} Q&A</div>
+                            </div>
+                            <div class="qa-batch-cards">
+                                ${entry.qaPairs.map(pair => `
+                                    <article class="qa-card">
+                                        <div class="qa-category-badge">${escapeHtml(qaCategoryLabel(pair.category || 'direct'))}</div>
+                                        <h3 class="qa-question">${escapeHtml(pair.question)}</h3>
+                                        <p class="qa-answer">${escapeHtml(pair.answer)}</p>
+                                    </article>
+                                `).join('')}
+                            </div>
+                        </section>
+                    `)
+                    .join('');
+            }
+
+            function qaBackendAvailable() {
+                return Boolean(getQaApiKey()) || Boolean(qaRuntime.enabled && qaRuntime.endpoint);
+            }
+
+            function setQaControlsDisabled(disabled) {
+                const generateQaButton = document.getElementById('generateQaButton');
+                const qaCountInput = document.getElementById('qaCountInput');
+                const unavailable = !qaBackendAvailable();
+                generateQaButton.disabled = disabled || unavailable;
+                if (qaCountInput) {
+                    qaCountInput.disabled = disabled || unavailable;
+                }
+            }
+
+            function setQaStatus(message, detail = '', options = {}) {
+                const status = document.getElementById('qaStatus');
+                const isLoading = Boolean(options.loading);
+                const progressLabel = options.progressLabel || '질문과 답변을 생성하는 중입니다. | Generating questions and answers.';
+                status.classList.toggle('is-loading', isLoading);
+                status.innerHTML = `
+                    <strong>${message}</strong>
+                    ${detail ? `<br />${detail}` : ''}
+                    ${isLoading ? `
+                        <div class="qa-status-progress" aria-hidden="true">
+                            <div class="qa-status-progress-label">${progressLabel}</div>
+                            <div class="qa-status-progress-track">
+                                <div class="qa-status-progress-fill"></div>
+                            </div>
+                        </div>
+                    ` : ''}
+                `;
+            }
+
+            function setQaLoadingState(isLoading) {
+                state.qaLoading = isLoading;
+                setQaControlsDisabled(isLoading);
+            }
+
+            function resolveQaSourceDocument() {
+                if (!sourceDocuments.length) {
+                    return null;
+                }
+                const active = state.activeElement;
+                if (active?.type === 'node') {
+                    const node = nodeById[active.id];
+                    const firstSeen = node?.provenance?.firstSeen;
+                    if (firstSeen) {
+                        const matched = sourceDocuments.find(doc => doc.url === firstSeen.url);
+                        if (matched) {
+                            return matched;
+                        }
+                    }
+                } else if (active?.type === 'edge') {
+                    const edge = edgeById[active.id];
+                    const firstSeen = edge?.provenance?.firstSeen;
+                    if (firstSeen) {
+                        const matched = sourceDocuments.find(doc => doc.url === firstSeen.url);
+                        if (matched) {
+                            return matched;
+                        }
+                    }
+                }
+                const ranked = [...sourceDocuments].sort((a, b) => (b.text?.length || 0) - (a.text?.length || 0));
+                return ranked[0] || null;
+            }
+
+            async function generateQaFromInputUrl() {
+                if (state.qaLoading) {
+                    return;
+                }
+
+                const sourceDocument = resolveQaSourceDocument();
+                if (!sourceDocument) {
+                    setQaStatus('소스 없음 | No Source', '수집된 원문이 없습니다. 그래프를 다시 생성하세요.');
+                    return;
+                }
+                const inputUrl = sourceDocument.url;
+
+                if (!getQaApiKey() && !(qaRuntime.enabled && qaRuntime.endpoint)) {
+                    const label = getQaProvider() === 'openrouter' ? 'OpenRouter' : 'OpenAI';
+                    setQaStatus('API 키 필요 | API Key Required', `Q&A 탭 상단에서 ${label} API 키를 입력하세요. 키는 브라우저 localStorage에만 저장됩니다. | Enter your ${label} API key above (stored only in browser localStorage).`);
+                    return;
+                }
+
+                setQaLoadingState(true);
+                const qaCount = getQaCount();
+                const qaModel = getQaModel();
+                const qaFocus = getQaFocus();
+                const active = state.activeElement;
+                if (qaFocus === 'entity' && active?.type !== 'node') {
+                    setQaLoadingState(false);
+                    setQaStatus('선택 엔티티 없음 | No Selected Entity', '생성 기준이 "선택 엔티티"입니다. 먼저 그래프에서 엔티티를 하나 선택한 뒤 다시 시도하세요.');
+                    return;
+                }
+                if (qaFocus === 'relation' && active?.type !== 'edge') {
+                    setQaLoadingState(false);
+                    setQaStatus('선택 관계 없음 | No Selected Relation', '생성 기준이 "선택 관계"입니다. 먼저 그래프에서 관계선(edge)을 하나 클릭한 뒤 다시 시도하세요.');
+                    return;
+                }
+                const focusLabel = qaFocus === 'entity' ? '선택 엔티티' : qaFocus === 'relation' ? '선택 관계' : qaFocus === 'indirect' ? '간접 질문' : '페이지 전체';
+                setQaStatus(
+                    'Q&A 생성 중 | Generating Q&A',
+                    `모델 ${qaModel} 로 ${qaCount}개 실시간 생성 중입니다. 기준: ${focusLabel} · URL: ${sourceDocument.url}`,
+                    {
+                        loading: true,
+                        progressLabel: '모델 응답을 기다리는 중입니다. | Waiting for model response.',
+                    },
+                );
+                try {
+                    const qaPairs = await requestModelGeneratedQa(
+                        inputUrl,
+                        sourceDocument,
+                        active?.type === 'node' ? active.id : null,
+                        active?.type === 'edge' ? active.id : null,
+                    );
+                    setQaStatus('Q&A 생성 완료 | Q&A Generated', `모델 ${qaModel} 로 ${qaPairs.length}개 생성 완료. 기준 URL: ${sourceDocument.url}`);
+                    renderQaResults(qaPairs, {
+                        inputUrl,
+                        sourceUrl: sourceDocument.url,
+                        model: qaModel,
+                    });
+                } catch (error) {
+                    setQaStatus('Q&A 생성 실패 | Q&A Generation Failed', String(error?.message || error));
+                } finally {
+                    setQaLoadingState(false);
+                }
+            }
+
+            function getVisibleEntityCount() {
+                if (!selectableEntities.length) {
+                    return 0;
+                }
+
+                return Math.max(1, Math.round(selectableEntities.length * state.visibleEntityRatio));
+            }
+
+            function getVisibleEntitySubset() {
+                return selectableEntities.slice(0, getVisibleEntityCount());
+            }
+
+            function updateVisibleEntityLabel() {
+                const slider = document.getElementById('visibleEntitySlider');
+                const valueElement = document.getElementById('visibleEntityValue');
+
+                if (slider) {
+                    slider.value = state.visibleEntityRatio.toFixed(1);
+                }
+
+                if (valueElement) {
+                    valueElement.textContent = `${Math.round(state.visibleEntityRatio * 100)}%`;
+                }
+            }
+
+            function buildVisibleRelationSummary() {
+                const relationSummary = new Map();
+
+                visibleEdgesData.forEach(edge => {
+                    const summary = relationSummary.get(edge.predicate) || {
+                        predicate: edge.predicate,
+                        count: 0,
+                        color: edge.color
+                    };
+                    summary.count += 1;
+                    relationSummary.set(edge.predicate, summary);
+                });
+
+                return [...relationSummary.values()]
+                    .sort((left, right) => {
+                        if (right.count !== left.count) {
+                            return right.count - left.count;
+                        }
+                        return left.predicate.localeCompare(right.predicate, 'ko');
+                    })
+                    .slice(0, 12);
+            }
+
+            function rebuildVisibleData() {
+                visibleNodesData = getVisibleEntitySubset();
+                visibleNodeIds = new Set(visibleNodesData.map(node => node.id));
+                visibleEdgesData = vizData.edges.filter(edge => (
+                    visibleNodeIds.has(edge.source) && visibleNodeIds.has(edge.target)
+                ));
+
+                visibleEdgesByPredicate = {};
+                visibleEdgesData.forEach(edge => {
+                    if (!visibleEdgesByPredicate[edge.predicate]) {
+                        visibleEdgesByPredicate[edge.predicate] = [];
+                    }
+                    visibleEdgesByPredicate[edge.predicate].push(edge.id);
+                });
+
+                visibleClusterData = vizData.clusters
+                    .map(cluster => {
+                        const members = cluster.members.filter(member => visibleNodeIds.has(member));
+                        if (!members.length) {
+                            return null;
+                        }
+                        return {
+                            ...cluster,
+                            members,
+                            size: members.length
+                        };
+                    })
+                    .filter(Boolean);
+
+                visibleNodesByCluster = {};
+                visibleClusterData.forEach(cluster => {
+                    visibleNodesByCluster[cluster.id] = new Set(cluster.members);
+                });
+
+                if (state.activeElement?.type === 'node' && !visibleNodeIds.has(state.activeElement.id)) {
+                    state.activeElement = null;
+                }
+
+                if (state.activeElement?.type === 'edge' && !visibleEdgesData.some(edge => edge.id === state.activeElement.id)) {
+                    state.activeElement = null;
+                }
+
+                if (state.focusCluster && !visibleNodesByCluster[state.focusCluster]) {
+                    state.focusCluster = null;
+                }
+
+                if (state.focusPredicate && !visibleEdgesByPredicate[state.focusPredicate]) {
+                    state.focusPredicate = null;
+                }
+
+                updateVisibleEntityLabel();
+            }
+
+            function renderStats() {
+                const grid = document.getElementById('statsGrid');
+                const stats = vizData.stats;
+                const entries = [
+                    { label: '표시 엔티티 | Visible Entities', value: `${visibleNodesData.length}/${stats.entities}` },
+                    { label: '표시 관계 | Visible Relations', value: `${visibleEdgesData.length}/${stats.relations}` },
+                    { label: '전체 엔티티 | Total Entities', value: stats.entities },
+                    { label: '전체 관계 수 | Total Relations', value: stats.relations },
+                    { label: '관계 유형 | Relation Types', value: stats.relationTypes },
+                    { label: '엔티티 클러스터 | Entity Clusters', value: stats.entityClusters },
+                    { label: '엣지 클러스터 | Edge Clusters', value: stats.edgeClusters },
+                    { label: '고립 엔티티 | Isolated Entities', value: stats.isolatedEntities },
+                    { label: '컴포넌트 | Components', value: stats.components },
+                    { label: '평균 차수 | Average Degree', value: stats.averageDegree }
+                ];
+                grid.innerHTML = entries
+                    .map(entry => `
+                        <div class="stat-card">
+                            <div class="stat-value">${entry.value}</div>
+                            <div>${entry.label}</div>
+                        </div>
+                    `)
+                    .join('');
+            }
+
+            function renderTopLists() {
+                const topEntitiesContainer = document.getElementById('topEntities');
+                const topRelationsContainer = document.getElementById('topRelations');
+                const topVisibleEntities = visibleNodesData.slice(0, 12);
+                const relationLimit = uiLimits.relationSuggestionLimit || 12;
+                const topVisibleRelations = buildVisibleRelationSummary().slice(0, relationLimit);
+
+                const entityItems = topVisibleEntities.map(node => {
+                    const clusterLabel = node.cluster ? `${node.cluster}` : '미분류 | Unclustered';
+                    return `
+                        <button class="list-item entity-item" data-entity="${node.id}">
+                            <div>
+                                <strong>${node.label}</strong>
+                                <div class="meta">클러스터 | Cluster: ${clusterLabel}</div>
+                            </div>
+                            <div class="pill">차수 | Degree: ${node.degree}</div>
+                        </button>
+                    `;
+                });
+                topEntitiesContainer.innerHTML = entityItems.join('') || '<div class="meta">엔티티가 없습니다. | No entities.</div>';
+
+                const relationItems = topVisibleRelations.map(item => `
+                    <div class="list-item relation-item" data-predicate="${item.predicate}">
+                        <div>
+                            <strong>${item.predicate}</strong>
+                            <div class="meta">${item.count}개 관계 | ${item.count} relations</div>
+                        </div>
+                        <div class="pill" style="background: ${item.color}1a; border: 1px solid ${item.color};">${item.count}</div>
+                    </div>
+                `);
+                topRelationsContainer.innerHTML = relationItems.join('') || '<div class="meta">관계가 없습니다. | No relations.</div>';
+            }
+
+            function renderRootEntityOptions() {
+                const list = document.getElementById('rootEntityList');
+                const recommendations = document.getElementById('rootEntityRecommendations');
+                const visibleEntities = getVisibleEntitySubset();
+                const maxRoot = Math.min(uiLimits.rootEntitySuggestionLimit || 30, visibleEntities.length);
+
+                list.innerHTML = visibleEntities
+                    .slice(0, maxRoot)
+                    .map(node => `<option value="${node.label}" label="${node.label} (차수 | Degree: ${node.degree})"></option>`)
+                    .join('');
+
+                recommendations.innerHTML = visibleEntities
+                    .slice(0, maxRoot)
+                    .slice(0, 20)
+                    .map(node => `
+                        <button class="list-item entity-item root-recommendation-item" data-entity="${node.id}">
+                            <div>
+                                <strong>${node.label}</strong>
+                                <div class="meta">추천 루트 | Recommended Root</div>
+                            </div>
+                            <div class="pill">차수 | Degree: ${node.degree}</div>
+                        </button>
+                    `)
+                    .join('');
+            }
+
+            function syncRootEntityInput() {
+                const input = document.getElementById('rootEntityInput');
+                if (!input) {
+                    return;
+                }
+
+                if (state.activeElement?.type === 'node') {
+                    input.value = state.activeElement.id;
+                    state.rootEntityId = state.activeElement.id;
+                } else if (!state.activeElement) {
+                    input.value = '';
+                    state.rootEntityId = null;
+                }
+            }
+
+            function renderClusters() {
+                const container = document.getElementById('clusterList');
+                const note = document.getElementById('clusterProvenanceNote');
+                if (note) {
+                    note.textContent = vizData.clusterProvenance === 'heuristic'
+                        ? '표시 시점 휴리스틱 분류 | Heuristic clusters (저장된 클러스터 없음)'
+                        : '저장된 클러스터 | Stored clusters';
+                }
+                if (!visibleClusterData.length) {
+                    container.innerHTML = '<div class="meta">클러스터 정보가 없습니다. | No cluster information provided.</div>';
+                    return;
+                }
+                const clusterLimit = Math.min(uiLimits.clusterSuggestionLimit || 30, visibleClusterData.length);
+                container.innerHTML = visibleClusterData
+                    .slice(0, clusterLimit)
+                    .map(cluster => `
+                        <button class="list-item cluster-item" data-cluster="${cluster.id}" style="border-left-color: ${cluster.color};">
+                            <div>
+                                <strong>${cluster.label}</strong>
+                                <div class="meta">${cluster.size}개 멤버 | ${cluster.size} members</div>
+                            </div>
+                            <span class="legend-swatch" style="background: ${cluster.color};"></span>
+                        </button>
+                    `)
+                    .join('');
+            }
+
+            // function renderRelationsTable() {
+            //     const tbody = document.getElementById('relationsTable');
+            //     tbody.innerHTML = vizData.relations
+            //         .map(rel => `
+            //             <tr data-edge="${rel.edgeId}">
+            //                 <td>${rel.source}</td>
+            //                 <td><span class="pill" style="border: 1px solid ${rel.color}; background: ${rel.color}1a;">${rel.predicate}</span></td>
+            //                 <td>${rel.target}</td>
+            //             </tr>
+            //         `)
+            //         .join('');
+            // }
+
+            // function renderInsights() {
+            //     const insights = document.getElementById('insightsContent');
+            //     const clusters = vizData.clusters
+            //         .map(cluster => `
+            //             <div class="list-item" style="border-left: 4px solid ${cluster.color};">
+            //                 <div>
+            //                     <strong>${cluster.label}</strong>
+            //                     <div class="meta">Members: ${cluster.members.join(', ')}</div>
+            //                 </div>
+            //                 <div>${cluster.size}</div>
+            //             </div>
+            //         `)
+            //         .join('');
+
+            //     const components = vizData.components
+            //         .map((component, index) => `
+            //             <div class="list-item">
+            //                 <div>
+            //                     <strong>Component ${index + 1}</strong>
+            //                     <div class="meta">${component.members.join(', ')}</div>
+            //                 </div>
+            //                 <div>${component.size}</div>
+            //             </div>
+            //         `)
+            //         .join('');
+
+            //     const isolates = vizData.isolatedEntities.length
+            //         ? vizData.isolatedEntities.join(', ')
+            //         : 'None';
+
+            //     insights.innerHTML = `
+            //         <div class="section">
+            //             <h2>Clusters</h2>
+            //             <div class="list">${clusters || '<div class="meta">No clusters</div>'}</div>
+            //         </div>
+            //         <div class="section">
+            //             <h2>Connected components</h2>
+            //             <div class="list">${components || '<div class="meta">Single connected component</div>'}</div>
+            //         </div>
+            //         <div class="section">
+            //             <h2>Isolated entities</h2>
+            //             <div class="meta">${isolates}</div>
+            //         </div>
+            //     `;
+            // }
+
+            function setActiveElement(element) {
+                state.activeElement = element;
+                syncRootEntityInput();
+                renderSelectionDetails();
+                updateHighlights();
+
+                // Notify parent about selection change
+                if (window.parent !== window && state.sidebarDisabled) {
+                    const selection = element ? {
+                        type: element.type,
+                        id: element.id,
+                        ...getElementDetails(element)
+                    } : null;
+                    window.parent.postMessage({
+                        type: 'selectionChanged',
+                        selection: selection
+                    }, '*');
+                }
+            }
+
+            function getElementDetails(element) {
+                if (!element) return {};
+
+                if (element.type === 'node') {
+                    const node = nodeById[element.id];
+                    return {
+                        label: node.label,
+                        cluster: node.cluster,
+                        degree: node.degree,
+                        indegree: node.indegree,
+                        outdegree: node.outdegree,
+                        neighbors: node.neighbors
+                    };
+                } else if (element.type === 'edge') {
+                    const edge = edgeById[element.id];
+                    return {
+                        source: edge.source,
+                        target: edge.target,
+                        predicate: edge.predicate,
+                        cluster: edge.cluster
+                    };
+                }
+                return {};
+            }
+
+            function clearActiveElement() {
+                state.activeElement = null;
+                syncRootEntityInput();
+                renderSelectionDetails();
+                updateHighlights();
+            }
+
+            function escapeHtml(value) {
+                return String(value ?? '')
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
+            }
+
+            function shortUrl(url, maxLength = 72) {
+                const text = String(url || '');
+                if (text.length <= maxLength) {
+                    return text;
+                }
+                return `${text.slice(0, maxLength - 1)}…`;
+            }
+
+            function renderNodeProvenance(node) {
+                const provenance = node.provenance || {};
+                const mentions = provenance.mentions || [];
+                const mentionCount = provenance.mentionCount || 0;
+                const documentCount = provenance.documentCount || 0;
+                const firstSeen = provenance.firstSeen;
+
+                let header = `원문 언급 | Mentions: ${mentionCount}회 · 문서 ${documentCount}개`;
+                if (firstSeen) {
+                    header += ` · 첫 출처 #${Number(firstSeen.docIndex || 0) + 1} (${firstSeen.positionPercent}% 지점)`;
+                }
+
+                if (!mentions.length) {
+                    return `
+                        <div class="provenance-block">
+                            <h4>물리적 출처 | Physical Provenance</h4>
+                            <div class="provenance-meta">${header}</div>
+                            <div class="provenance-empty">수집된 원문에서 정확히 일치하는 문자열을 찾지 못했습니다. (대소문자 무시, 공백 정규화 기준)</div>
+                        </div>
+                    `;
+                }
+
+                const items = mentions.map(mention => `
+                    <div class="provenance-item">
+                        <div><strong>문서 #${Number(mention.docIndex || 0) + 1}</strong> · ${escapeHtml(mention.domain || '')} · ${escapeHtml(mention.crawlSource || 'unknown')}</div>
+                        <div><a href="${escapeHtml(mention.url)}" target="_blank" rel="noopener">${escapeHtml(shortUrl(mention.url))}</a></div>
+                        <div class="provenance-meta">문자 위치 ${mention.charStart}–${mention.charEnd} / 전체 ${mention.textLength}자 · 문서 내 ${mention.positionPercent}% 지점</div>
+                        <div class="provenance-snippet">“${escapeHtml(mention.snippet)}”</div>
+                    </div>
+                `).join('');
+
+                return `
+                    <div class="provenance-block">
+                        <h4>물리적 출처 | Physical Provenance</h4>
+                        <div class="provenance-meta">${header}</div>
+                        ${items}
+                    </div>
+                `;
+            }
+
+            function renderEdgeProvenance(edge) {
+                const provenance = edge.provenance || {};
+                const supporting = provenance.supportingDocs || [];
+                const documentCount = provenance.documentCount || 0;
+                const firstSeen = provenance.firstSeen;
+
+                let header = `동시 언급 문서 | Co-mention docs: ${documentCount}개`;
+                if (firstSeen) {
+                    header += ` · 대표 근거 #${Number(firstSeen.docIndex || 0) + 1} (거리 ${firstSeen.distance}자, ${firstSeen.positionPercent}% 지점)`;
+                }
+
+                if (!supporting.length) {
+                    return `
+                        <div class="provenance-block">
+                            <h4>물리적 출처 | Physical Provenance</h4>
+                            <div class="provenance-meta">${header}</div>
+                            <div class="provenance-empty">출발·도착 엔티티가 같은 문서에 함께 등장하는 위치를 찾지 못했습니다.</div>
+                        </div>
+                    `;
+                }
+
+                const items = supporting.map(doc => `
+                    <div class="provenance-item">
+                        <div><strong>문서 #${Number(doc.docIndex || 0) + 1}</strong> · ${escapeHtml(doc.domain || '')} · ${escapeHtml(doc.crawlSource || 'unknown')}</div>
+                        <div><a href="${escapeHtml(doc.url)}" target="_blank" rel="noopener">${escapeHtml(shortUrl(doc.url))}</a></div>
+                        <div class="provenance-meta">subject@${doc.subjectPos}, object@${doc.objectPos} · 간격 ${doc.distance}자 · 문서 내 ${doc.positionPercent}% 지점</div>
+                        <div class="provenance-snippet">“${escapeHtml(doc.snippet)}”</div>
+                    </div>
+                `).join('');
+
+                return `
+                    <div class="provenance-block">
+                        <h4>물리적 출처 | Physical Provenance</h4>
+                        <div class="provenance-meta">${header}</div>
+                        ${items}
+                    </div>
+                `;
+            }
+
+            function renderSelectionDetails() {
+                const panel = document.getElementById('selectionDetails');
+                const centerButton = document.getElementById('centerSelectedEntityButton');
+                const active = state.activeElement;
+                if (!active) {
+                    if (centerButton) {
+                        centerButton.disabled = true;
+                    }
+                    panel.innerHTML = '네트워크에서 노드나 관계를 클릭해 상세 정보를 확인하세요. | Click a node or relation in the network to inspect details.';
+                    return;
+                }
+
+                if (active.type === 'node') {
+                    if (centerButton) {
+                        centerButton.disabled = false;
+                    }
+                    const node = nodeById[active.id];
+                    const cluster = node.cluster ? `클러스터 | Cluster: ${node.cluster}` : '미분류 | Unclustered';
+                    const neighbors = node.neighbors.length ? node.neighbors.join(', ') : '없음 | None';
+                    panel.innerHTML = `
+                        <h3>${escapeHtml(node.label)}</h3>
+                        <ul>
+                            <li>${escapeHtml(cluster)}</li>
+                            <li>전체 차수 | Total Degree: ${node.degree}</li>
+                            <li>나가는 연결 | Outgoing: ${node.outdegree}</li>
+                            <li>들어오는 연결 | Incoming: ${node.indegree}</li>
+                            <li>이웃 노드 | Neighbors: ${escapeHtml(neighbors)}</li>
+                        </ul>
+                        ${renderNodeProvenance(node)}
+                    `;
+                } else if (active.type === 'edge') {
+                    if (centerButton) {
+                        centerButton.disabled = true;
+                    }
+                    const edge = edgeById[active.id];
+                    const cluster = edge.cluster ? `클러스터 | Cluster: ${edge.cluster}` : '미분류 | Unclustered';
+                    const sourceNode = nodeById[edge.source];
+                    const targetNode = nodeById[edge.target];
+                    const predicateCount = vizData.edges.filter(item => item.predicate === edge.predicate).length;
+                    const sourceDegree = sourceNode ? `차수 ${sourceNode.degree} (→${sourceNode.outdegree}/←${sourceNode.indegree})` : '정보 없음';
+                    const targetDegree = targetNode ? `차수 ${targetNode.degree} (→${targetNode.outdegree}/←${targetNode.indegree})` : '정보 없음';
+                    panel.innerHTML = `
+                        <h3>${escapeHtml(edge.source)} → ${escapeHtml(edge.target)}</h3>
+                        <ul>
+                            <li>관계 | Relation: ${escapeHtml(edge.predicate)}</li>
+                            <li>${escapeHtml(cluster)}</li>
+                            <li>엣지 ID | Edge ID: ${escapeHtml(edge.id)}</li>
+                            <li>서술어 사용 횟수 | Predicate Count: ${predicateCount}회</li>
+                            <li>출발 노드 차수 | Source Degree: ${escapeHtml(sourceDegree)}</li>
+                            <li>도착 노드 차수 | Target Degree: ${escapeHtml(targetDegree)}</li>
+                        </ul>
+                        ${renderEdgeProvenance(edge)}
+                    `;
+                }
+            }
+
+            function focusNodeInView(nodeId) {
+                if (!canvas || !nodeId) {
+                    return;
+                }
+
+                const node = nodes.find(item => item.id === nodeId);
+                if (!node || !Number.isFinite(node.x) || !Number.isFinite(node.y)) {
+                    return;
+                }
+
+                const rect = canvas.getBoundingClientRect();
+                const width = Math.max(rect.width, 320);
+                const height = Math.max(rect.height, 200);
+                const nextScale = Math.max(transform?.k || 1, 1.15);
+                const nextTransform = d3.zoomIdentity
+                    .translate(width / 2 - node.x * nextScale, height / 2 - node.y * nextScale)
+                    .scale(nextScale);
+
+                d3.select(canvas)
+                    .transition()
+                    .duration(350)
+                    .call(zoomBehavior.transform, nextTransform);
+            }
+
+            function selectRootEntity(entityId, { center = true } = {}) {
+                if (!entityId || !nodeById[entityId] || !visibleNodeIds.has(entityId)) {
+                    return false;
+                }
+
+                state.rootEntityId = entityId;
+                setActiveElement({ type: 'node', id: entityId });
+                if (typeof renderEntityClasses === 'function') {
+                    const searchBox = document.getElementById('entityClassSearchInput');
+                    renderEntityClasses(searchBox?.value || '');
+                }
+                if (center) {
+                    focusNodeInView(entityId);
+                }
+                return true;
+            }
+
+            function toggleClusterFocus(clusterId) {
+                if (state.focusCluster === clusterId) {
+                    state.focusCluster = null;
+                } else {
+                    state.focusCluster = clusterId;
+                }
+                updateActiveButtons();
+                updateHighlights();
+            }
+
+            function togglePredicateFocus(predicate) {
+                if (state.focusPredicate === predicate) {
+                    state.focusPredicate = null;
+                } else {
+                    state.focusPredicate = predicate;
+                }
+                updateActiveButtons();
+                updateHighlights();
+            }
+
+            function toggleEntityFocus(id) {
+                if (state.activeElement?.id === id) {
+                    setActiveElement(null);
+                } else {
+                    setActiveElement({ type: 'node', id: id });
+                }
+            }
+
+            function updateActiveButtons() {
+                document.querySelectorAll('.cluster-item').forEach(item => {
+                    const clusterId = item.getAttribute('data-cluster');
+                    item.classList.toggle('active', state.focusCluster === clusterId);
+                });
+                document.querySelectorAll('.relation-item').forEach(item => {
+                    const predicate = item.getAttribute('data-predicate');
+                    item.classList.toggle('active', state.focusPredicate === predicate);
+                });
+                document.querySelectorAll('.entity-item').forEach(item => {
+                    const entityId = item.getAttribute('data-entity');
+                    item.classList.toggle('active', state.activeElement?.type === 'node' && state.activeElement.id === entityId);
+                });
+            }
+
+            // Canvas-based network visualization
+            let canvas, ctx, transform, simulation, zoomBehavior;
+            let nodes = [], edges = [];
+            let highlightedNodes = new Set();
+            let highlightedEdges = new Set();
+            let isFiltering = false;
+            let initialViewApplied = false;
+
+            function getScaledNodeRadius(node) {
+                return (node?.radius || 0) * state.nodeScale;
+            }
+
+            function getNodeLabelFontSize() {
+                return Math.max(11, Math.min(15, 12 * state.nodeScale));
+            }
+
+            function getEdgeLabelFontSize() {
+                return Math.max(9, Math.min(12, 10 * Math.sqrt(state.nodeScale)));
+            }
+
+            function updateNodeSizeLabel() {
+                const valueElement = document.getElementById('nodeSizeValue');
+                const slider = document.getElementById('nodeSizeSlider');
+                if (slider) {
+                    slider.value = state.nodeScale.toFixed(1);
+                }
+                if (valueElement) {
+                    valueElement.textContent = `${Math.round(state.nodeScale * 100)}%`;
+                }
+            }
+
+            function applyNodeScale(nextScale) {
+                const normalizedScale = Math.max(
+                    NODE_SCALE_MIN,
+                    Math.min(NODE_SCALE_MAX, Math.round(nextScale / NODE_SCALE_STEP) * NODE_SCALE_STEP)
+                );
+
+                if (Math.abs(state.nodeScale - normalizedScale) < 0.001) {
+                    updateNodeSizeLabel();
+                    return;
+                }
+
+                state.nodeScale = Number(normalizedScale.toFixed(1));
+                updateNodeSizeLabel();
+
+                if (simulation) {
+                    simulation
+                        .force('collision', d3.forceCollide().radius(node => getScaledNodeRadius(node) + 12))
+                        .alpha(0.2)
+                        .restart();
+                }
+
+                render();
+            }
+
+            function getCanvasDimensions() {
+                if (!canvas) {
+                    return { width: 320, height: 200 };
+                }
+
+                const rect = canvas.getBoundingClientRect();
+                return {
+                    width: Math.max(rect.width, 320),
+                    height: Math.max(rect.height, 200)
+                };
+            }
+
+            function fitGraphToViewport() {
+                if (!nodes.length || !canvas || !zoomBehavior) {
+                    return;
+                }
+
+                const validNodes = nodes.filter(node => Number.isFinite(node.x) && Number.isFinite(node.y));
+                if (!validNodes.length) {
+                    return;
+                }
+
+                const { width, height } = getCanvasDimensions();
+                const minX = Math.min(...validNodes.map(node => node.x - getScaledNodeRadius(node)));
+                const maxX = Math.max(...validNodes.map(node => node.x + getScaledNodeRadius(node)));
+                const minY = Math.min(...validNodes.map(node => node.y - getScaledNodeRadius(node)));
+                const maxY = Math.max(...validNodes.map(node => node.y + getScaledNodeRadius(node)));
+
+                const graphWidth = Math.max(maxX - minX, 1);
+                const graphHeight = Math.max(maxY - minY, 1);
+                const padding = 56;
+
+                const scaleX = (width - padding * 2) / graphWidth;
+                const scaleY = (height - padding * 2) / graphHeight;
+                const scale = Math.max(0.75, Math.min(Math.min(scaleX, scaleY), 1.4));
+
+                const translateX = width / 2 - ((minX + maxX) / 2) * scale;
+                const translateY = height / 2 - ((minY + maxY) / 2) * scale;
+                const nextTransform = d3.zoomIdentity.translate(translateX, translateY).scale(scale);
+
+                d3.select(canvas).call(zoomBehavior.transform, nextTransform);
+            }
+
+            function rebuildSimulation({ preservePositions = true } = {}) {
+                if (!canvas || !ctx) {
+                    return;
+                }
+
+                const previousPositions = preservePositions
+                    ? new Map(nodes.map(node => [node.id, {
+                        x: node.x,
+                        y: node.y,
+                        vx: node.vx,
+                        vy: node.vy
+                    }]))
+                    : new Map();
+
+                nodes = visibleNodesData.map(node => ({
+                    ...node,
+                    ...(previousPositions.get(node.id) || {})
+                }));
+                edges = visibleEdgesData.map(edge => ({ ...edge }));
+
+                if (simulation) {
+                    simulation.stop();
+                }
+
+                const { width, height } = getCanvasDimensions();
+                initialViewApplied = false;
+
+                simulation = d3
+                    .forceSimulation(nodes)
+                    .alphaDecay(0.05)
+                    .velocityDecay(0.4)
+                    .force('link', d3.forceLink(edges).id(d => d.id).distance(120).strength(0.3))
+                    .force('charge', d3.forceManyBody().strength(-280))
+                    .force('center', d3.forceCenter(width / 2, height / 2))
+                    .force('collision', d3.forceCollide().radius(d => getScaledNodeRadius(d) + 12));
+
+                simulation.on('tick', () => {
+                    if (!initialViewApplied && simulation.alpha() < 0.22) {
+                        fitGraphToViewport();
+                        initialViewApplied = true;
+                    }
+
+                    render();
+                });
+
+                simulation.on('end', () => {
+                    if (!initialViewApplied) {
+                        fitGraphToViewport();
+                        initialViewApplied = true;
+                    }
+                    render();
+                });
+
+                render();
+            }
+
+            function renderVisibleSubset() {
+                rebuildVisibleData();
+                renderStats();
+                renderTopLists();
+                renderClusters();
+                renderRootEntityOptions();
+                syncRootEntityInput();
+                renderSelectionDetails();
+                updateActiveButtons();
+                updateHighlights();
+                rebuildSimulation();
+            }
+
+            function applyVisibleEntityRatio(nextRatio) {
+                const normalizedRatio = Math.max(
+                    VISIBLE_ENTITY_RATIO_MIN,
+                    Math.min(
+                        VISIBLE_ENTITY_RATIO_MAX,
+                        Math.round(nextRatio / VISIBLE_ENTITY_RATIO_STEP) * VISIBLE_ENTITY_RATIO_STEP
+                    )
+                );
+
+                if (Math.abs(state.visibleEntityRatio - normalizedRatio) < 0.001) {
+                    updateVisibleEntityLabel();
+                    return;
+                }
+
+                state.visibleEntityRatio = Number(normalizedRatio.toFixed(1));
+                renderVisibleSubset();
+            }
+
+            function createNetwork() {
+                console.log('[iframe] createNetwork starting...');
+
+                if (typeof d3 === 'undefined') {
+                    console.error('[iframe] D3.js not loaded!');
+                    return;
+                }
+                console.log('[iframe] D3.js version:', d3.version);
+
+                canvas = document.getElementById('networkCanvas');
+                if (!canvas) {
+                    console.error('[iframe] Canvas element not found!');
+                    return;
+                }
+
+                ctx = canvas.getContext('2d');
+                if (!ctx) {
+                    console.error('[iframe] Canvas context not available!');
+                    return;
+                }
+
+                // Force a layout recalculation to ensure proper sizing
+                canvas.offsetHeight; // Trigger reflow
+
+                // Set canvas size with device pixel ratio for crisp rendering
+                const rect = canvas.getBoundingClientRect();
+                console.log('[iframe] Canvas rect:', rect.width, 'x', rect.height);
+
+                // Ensure minimum size for mobile/narrow viewports
+                const width = Math.max(rect.width, 320);
+                const height = Math.max(rect.height, 200);
+
+                const dpr = window.devicePixelRatio || 1;
+                canvas.width = width * dpr;
+                canvas.height = height * dpr;
+                ctx.scale(dpr, dpr);
+                canvas.style.width = width + 'px';
+                canvas.style.height = height + 'px';
+
+                // Initialize transform for zooming/panning
+                transform = d3.zoomIdentity;
+
+                // Mouse interaction handling
+                let draggedNode = null;
+                let isDraggingNode = false;
+                let mouseX, mouseY;
+                let mouseDownPos = null;
+                let isMouseDown = false;
+                const DRAG_THRESHOLD = 10; // pixels - minimum movement to start dragging
+
+                // Set up zoom behavior with conditional activation
+                zoomBehavior = d3.zoom()
+                    .scaleExtent([0.25, 3])
+                    .on('zoom', (event) => {
+                        // Apply zoom only if not dragging a node
+                        if (!isDraggingNode) {
+                            transform = event.transform;
+                            render();
+                        }
+                    })
+                    .filter((event) => {
+                        // Allow zoom with mouse wheel or when no node under cursor
+                        if (event.type === 'wheel') return true;
+                        if (event.type === 'mousedown' && event.button === 0) {
+                            const pos = getMousePos(event);
+                            const node = findNode(pos.x, pos.y);
+                            return !node;
+                        }
+                        return true;
+                    });
+
+                d3.select(canvas).call(zoomBehavior);
+
+                function getMousePos(event) {
+                    const rect = canvas.getBoundingClientRect();
+                    return {
+                        x: (event.clientX - rect.left - transform.x) / transform.k,
+                        y: (event.clientY - rect.top - transform.y) / transform.k
+                    };
+                }
+
+                function findNode(x, y) {
+                    for (let i = nodes.length - 1; i >= 0; i--) {
+                        const node = nodes[i];
+                        const dx = x - node.x;
+                        const dy = y - node.y;
+                        const scaledRadius = getScaledNodeRadius(node);
+                        if (dx * dx + dy * dy < scaledRadius * scaledRadius) {
+                            return node;
+                        }
+                    }
+                    return null;
+                }
+
+                function findEdge(x, y) {
+                    for (let i = edges.length - 1; i >= 0; i--) {
+                        const edge = edges[i];
+                        if (!edge.source || !edge.target) continue;
+
+                        // Check if click is near the edge line
+                        const dx = edge.target.x - edge.source.x;
+                        const dy = edge.target.y - edge.source.y;
+                        const length = Math.sqrt(dx * dx + dy * dy);
+                        if (length === 0) continue;
+
+                        const dot = ((x - edge.source.x) * dx + (y - edge.source.y) * dy) / (length * length);
+                        if (dot < 0 || dot > 1) continue;
+
+                        const projX = edge.source.x + dot * dx;
+                        const projY = edge.source.y + dot * dy;
+                        const distSq = (x - projX) * (x - projX) + (y - projY) * (y - projY);
+
+                        if (distSq < 25) { // 5px threshold
+                            return edge;
+                        }
+                    }
+                    return null;
+                }
+
+                // Prevent context menu on right click
+                canvas.addEventListener('contextmenu', (event) => {
+                    event.preventDefault();
+                    return false;
+                });
+
+                canvas.addEventListener('mousedown', (event) => {
+                    // Allow event only for primary button (left click)
+                    if (event.button !== 0) return;
+
+                    const pos = getMousePos(event);
+                    mouseX = pos.x;
+                    mouseY = pos.y;
+                    mouseDownPos = { x: pos.x, y: pos.y };
+                    isMouseDown = true;
+                    draggedNode = findNode(pos.x, pos.y);
+
+                    if (draggedNode) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        // Don't start dragging immediately - wait for movement
+                        canvas.style.cursor = 'grabbing';
+                    }
+                });
+
+                canvas.addEventListener('mousemove', (event) => {
+                    // Allow event only for primary button (left click)
+                    if (event.button !== 0) return;
+                    const pos = getMousePos(event);
+
+                    if (draggedNode && isDraggingNode) {
+                        // Already dragging - continue moving the node
+                        draggedNode.fx = pos.x;
+                        draggedNode.fy = pos.y;
+                    } else if (draggedNode && isMouseDown && mouseDownPos) {
+                        // Check if mouse moved enough to start dragging
+                        const dx = pos.x - mouseDownPos.x;
+                        const dy = pos.y - mouseDownPos.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+
+                        if (distance > DRAG_THRESHOLD) {
+                            // Start dragging
+                            isDraggingNode = true;
+                            simulation.alphaTarget(0.1).restart();
+                            draggedNode.fx = draggedNode.x;
+                            draggedNode.fy = draggedNode.y;
+                        }
+                    } else if (!isDraggingNode && !isMouseDown) {
+                        // Update cursor based on what's under mouse
+                        const node = findNode(pos.x, pos.y);
+                        const edge = findEdge(pos.x, pos.y);
+                        canvas.style.cursor = (node || edge) ? 'pointer' : 'grab';
+                    }
+                });
+
+                canvas.addEventListener('mouseup', (event) => {
+                    // Allow event only for primary button (left click)
+                    if (event.button !== 0) return;
+
+                    if (draggedNode) {
+                        if (isDraggingNode) {
+                            // Was actually dragging - stop the drag
+                            simulation.alphaTarget(0);
+                            draggedNode.fx = null;
+                            draggedNode.fy = null;
+                        }
+                        // Reset node reference
+                        draggedNode = null;
+                        canvas.style.cursor = 'grab';
+                    }
+
+                    // Reset all mouse states
+                    isMouseDown = false;
+                    isDraggingNode = false;
+                    mouseDownPos = null;
+                });
+
+                canvas.addEventListener('click', (event) => {
+                    // Only handle click if we weren't dragging
+                    if (isDraggingNode) return;
+
+                    const pos = getMousePos(event);
+                    const node = findNode(pos.x, pos.y);
+                    const edge = findEdge(pos.x, pos.y);
+
+                    if (node) {
+                        setActiveElement({ type: 'node', id: node.id });
+                    } else if (edge) {
+                        setActiveElement({ type: 'edge', id: edge.id });
+                    } else {
+                        clearActiveElement();
+                    }
+                });
+
+                canvas.addEventListener('dblclick', (event) => {
+                    const pos = getMousePos(event);
+                    const node = findNode(pos.x, pos.y);
+                    if (!node) {
+                        return;
+                    }
+
+                    setActiveElement({ type: 'node', id: node.id });
+                    focusNodeInView(node.id);
+                });
+
+                // Handle window resize
+                window.addEventListener('resize', resizeCanvas);
+
+                rebuildSimulation({ preservePositions: false });
+            }
+
+            function resizeCanvas() {
+                if (!canvas || !ctx) return;
+
+                // Force canvas to take full container size
+                if (state.sidebarDisabled) {
+                    canvas.style.width = '100%';
+                    canvas.style.height = '100%';
+                }
+
+                const rect = canvas.getBoundingClientRect();
+                console.log('Canvas resize - rect:', rect.width, 'x', rect.height);
+
+                // Ensure minimum size for mobile
+                const width = Math.max(rect.width, 320);
+                const height = Math.max(rect.height, 200);
+
+                const dpr = window.devicePixelRatio || 1;
+                canvas.width = width * dpr;
+                canvas.height = height * dpr;
+                ctx.scale(dpr, dpr);
+                canvas.style.width = width + 'px';
+                canvas.style.height = height + 'px';
+
+                // Update simulation center
+                if (simulation) {
+                    simulation.force('center', d3.forceCenter(width / 2, height / 2));
+                    simulation.alpha(0.3).restart();
+                    initialViewApplied = false;
+                }
+
+                render();
+            }
+
+
+            function render() {
+                if (!ctx || !canvas) return;
+
+                // Clear canvas
+                ctx.clearRect(0, 0, canvas.width / (window.devicePixelRatio || 1),
+                    canvas.height / (window.devicePixelRatio || 1));
+
+                // Apply transform
+                ctx.save();
+                ctx.translate(transform.x, transform.y);
+                ctx.scale(transform.k, transform.k);
+
+                // Set text properties
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.font = `${getNodeLabelFontSize()}px Inter, system-ui, sans-serif`;
+
+                // Draw edges first
+                edges.forEach(edge => {
+                    if (!edge.source || !edge.target) return;
+
+                    const isHighlighted = highlightedEdges.has(edge.id);
+                    const isDimmed = isFiltering && !isHighlighted;
+
+                    // Calculate edge endpoints accounting for node radius
+                    const dx = edge.target.x - edge.source.x;
+                    const dy = edge.target.y - edge.source.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy) || 1;
+                    const normX = dx / distance;
+                    const normY = dy / distance;
+
+                    const sourcePadding = getScaledNodeRadius(edge.source) + 2;
+                    const targetPadding = getScaledNodeRadius(edge.target) + 8;
+                    const sourceX = edge.source.x + normX * sourcePadding;
+                    const sourceY = edge.source.y + normY * sourcePadding;
+                    const targetX = edge.target.x - normX * targetPadding;
+                    const targetY = edge.target.y - normY * targetPadding;
+
+                    // Draw edge line
+                    ctx.strokeStyle = edge.color;
+                    ctx.globalAlpha = isDimmed ? 0.15 : (isHighlighted ? 1.0 : 0.55);
+                    ctx.lineWidth = 1.4;
+                    ctx.beginPath();
+                    ctx.moveTo(sourceX, sourceY);
+                    ctx.lineTo(targetX, targetY);
+                    ctx.stroke();
+
+                    // Draw arrowhead
+                    const arrowLength = 12;
+                    const arrowWidth = 24;
+                    const angle = Math.atan2(dy, dx);
+
+                    ctx.fillStyle = edge.color;
+                    ctx.beginPath();
+                    ctx.moveTo(targetX, targetY);
+                    ctx.lineTo(
+                        targetX - arrowLength * Math.cos(angle - arrowWidth * Math.PI / 180),
+                        targetY - arrowLength * Math.sin(angle - arrowWidth * Math.PI / 180)
+                    );
+                    ctx.lineTo(
+                        targetX - arrowLength * Math.cos(angle + arrowWidth * Math.PI / 180),
+                        targetY - arrowLength * Math.sin(angle + arrowWidth * Math.PI / 180)
+                    );
+                    ctx.closePath();
+                    ctx.fill();
+
+                    // Draw edge label if zoom level is appropriate
+                    if (transform.k > 0.8) {
+                        const labelX = (sourceX + targetX) / 2;
+                        const labelY = (sourceY + targetY) / 2;
+
+                        ctx.fillStyle = isDimmed ? 'rgba(30, 41, 59, 0.15)' : 'rgba(30, 41, 59, 0.8)';
+                        ctx.font = `${getEdgeLabelFontSize()}px Inter, system-ui, sans-serif`;
+                        ctx.fillText(edge.predicate, labelX, labelY);
+                    }
+                });
+
+                // Draw nodes
+                nodes.forEach(node => {
+                    const isHighlighted = highlightedNodes.has(node.id);
+                    const isDimmed = isFiltering && !isHighlighted;
+                    const scaledRadius = getScaledNodeRadius(node);
+
+                    // Draw node circle
+                    ctx.fillStyle = node.color;
+                    ctx.globalAlpha = isDimmed ? 0.15 : 1.0;
+                    ctx.beginPath();
+                    ctx.arc(node.x, node.y, scaledRadius, 0, 2 * Math.PI);
+                    ctx.fill();
+
+                    // Draw node border
+                    ctx.strokeStyle = '#0f172a';
+                    ctx.lineWidth = isHighlighted ? 2.4 : 1.2;
+                    ctx.stroke();
+
+                    // Draw node label
+                    if (transform.k > 0.5) {
+                        ctx.fillStyle = isDimmed ? 'rgba(15, 23, 42, 0.15)' : '#0f172a';
+                        ctx.font = `${getNodeLabelFontSize()}px Inter, system-ui, sans-serif`;
+                        ctx.fillText(node.label, node.x, node.y + scaledRadius + 14);
+                    }
+                });
+
+                ctx.restore();
+                ctx.globalAlpha = 1.0;
+            }
+
+            function updateHighlights() {
+                // Clear previous highlights
+                highlightedNodes.clear();
+                highlightedEdges.clear();
+                isFiltering = false;
+
+                const addNode = id => {
+                    if (id) {
+                        highlightedNodes.add(id);
+                    }
+                };
+                const addEdge = id => {
+                    if (id) {
+                        highlightedEdges.add(id);
+                    }
+                };
+
+                if (state.activeElement) {
+                    isFiltering = true;
+                    if (state.activeElement.type === 'node') {
+                        const node = nodeById[state.activeElement.id];
+                        addNode(node.id);
+                        node.neighbors.forEach(addNode);
+                        (node.edgeIds.outgoing || []).forEach(addEdge);
+                        (node.edgeIds.incoming || []).forEach(addEdge);
+                    } else if (state.activeElement.type === 'edge') {
+                        const edge = edgeById[state.activeElement.id];
+                        addEdge(edge.id);
+                        addNode(edge.source);
+                        addNode(edge.target);
+                    }
+                }
+
+                if (state.focusCluster && visibleNodesByCluster[state.focusCluster]) {
+                    isFiltering = true;
+                    visibleNodesByCluster[state.focusCluster].forEach(addNode);
+                    visibleEdgesData.forEach(edge => {
+                        if (
+                            visibleNodesByCluster[state.focusCluster].has(edge.source) &&
+                            visibleNodesByCluster[state.focusCluster].has(edge.target)
+                        ) {
+                            addEdge(edge.id);
+                        }
+                    });
+                }
+
+                if (state.focusPredicate && visibleEdgesByPredicate[state.focusPredicate]) {
+                    isFiltering = true;
+                    visibleEdgesByPredicate[state.focusPredicate].forEach(edgeId => {
+                        addEdge(edgeId);
+                        const edge = edgeById[edgeId];
+                        addNode(edge.source);
+                        addNode(edge.target);
+                    });
+                }
+
+                if (state.searchTerm) {
+                    const term = state.searchTerm.toLowerCase();
+                    isFiltering = true;
+                    visibleNodesData.forEach(node => {
+                        if (node.label.toLowerCase().includes(term)) {
+                            addNode(node.id);
+                            node.neighbors.forEach(addNode);
+                        }
+                    });
+                    visibleEdgesData.forEach(edge => {
+                        if (edge.predicate.toLowerCase().includes(term)) {
+                            addEdge(edge.id);
+                            addNode(edge.source);
+                            addNode(edge.target);
+                        }
+                    });
+                }
+
+                // Trigger re-render with updated highlights
+                render();
+            }
+
+            function toggleSidebar() {
+                if (state.sidebarDisabled) return;
+
+                state.sidebarCollapsed = !state.sidebarCollapsed;
+                const layout = document.querySelector('.layout');
+                const sidebar = document.querySelector('.sidebar');
+                const toggleButton = document.getElementById('sidebarToggle');
+
+                layout.classList.toggle('sidebar-collapsed', state.sidebarCollapsed);
+                sidebar.classList.toggle('collapsed', state.sidebarCollapsed);
+                toggleButton.classList.toggle('collapsed', state.sidebarCollapsed);
+
+                // Trigger canvas resize when sidebar toggles
+                setTimeout(() => {
+                    resizeCanvas();
+                }, 300); // Wait for transition to complete
+            }
+
+            function disableSidebar() {
+                state.sidebarDisabled = true;
+
+                const layout = document.querySelector('.layout');
+                const sidebar = document.querySelector('.sidebar');
+                const toggleButton = document.getElementById('sidebarToggle');
+                const main = document.querySelector('.main');
+                const tabPanel = document.querySelector('.tab-panel');
+                const networkPanel = document.querySelector('.network-panel');
+
+                layout.classList.add('sidebar-disabled');
+                sidebar.style.display = 'none';
+                toggleButton.style.display = 'none';
+
+                // Force styles directly for iframe context
+                main.style.width = '100%';
+                main.style.height = '100vh';
+                tabPanel.style.padding = '0';
+                tabPanel.style.width = '100%';
+                tabPanel.style.height = '100vh';
+                networkPanel.style.width = '100%';
+                networkPanel.style.height = '100vh';
+                networkPanel.style.borderRadius = '0';
+                networkPanel.style.border = 'none';
+
+                console.log('Sidebar disabled, forcing full width styles');
+
+                // Multiple resize attempts with forced reflow
+                setTimeout(() => {
+                    canvas.offsetHeight; // Trigger reflow
+                    console.log('First resize attempt after 200ms');
+                    resizeCanvas();
+                }, 200);
+
+                setTimeout(() => {
+                    canvas.offsetHeight; // Trigger reflow
+                    console.log('Second resize attempt after 500ms');
+                    resizeCanvas();
+                }, 500);
+
+                setTimeout(() => {
+                    canvas.offsetHeight; // Trigger reflow
+                    console.log('Final resize attempt after 800ms');
+                    resizeCanvas();
+                }, 800);
+
+                // Notify parent about graph data
+                if (window.parent !== window) {
+                    window.parent.postMessage({
+                        type: 'graphDataReady',
+                        data: vizData
+                    }, '*');
+                }
+            }
+
+            function bindInteractions() {
+                document.getElementById('clusterList').addEventListener('click', event => {
+                    const item = event.target.closest('.cluster-item');
+                    if (!item) {
+                        return;
+                    }
+                    toggleClusterFocus(item.getAttribute('data-cluster'));
+                });
+
+                document.getElementById('topRelations').addEventListener('click', event => {
+                    const item = event.target.closest('.relation-item');
+                    if (!item) {
+                        return;
+                    }
+                    togglePredicateFocus(item.getAttribute('data-predicate'));
+                });
+
+                document.getElementById('topEntities').addEventListener('click', event => {
+                    const item = event.target.closest('.entity-item');
+                    if (!item) {
+                        return;
+                    }
+                    selectRootEntity(item.getAttribute('data-entity'));
+                });
+
+                document.getElementById('rootEntityRecommendations').addEventListener('click', event => {
+                    const item = event.target.closest('.entity-item');
+                    if (!item) {
+                        return;
+                    }
+                    selectRootEntity(item.getAttribute('data-entity'));
+                });
+
+                document.getElementById('entityClassGroups').addEventListener('click', event => {
+                    const item = event.target.closest('.entity-item');
+                    if (!item) {
+                        return;
+                    }
+                    selectRootEntity(item.getAttribute('data-entity'));
+                });
+
+                document.getElementById('relationClassGroups').addEventListener('click', event => {
+                    const item = event.target.closest('.relation-item');
+                    if (!item) {
+                        return;
+                    }
+                    const edgeId = item.getAttribute('data-edge');
+                    if (edgeId && edgeById[edgeId]) {
+                        setActiveElement({ type: 'edge', id: edgeId });
+                        renderRelationClasses(relationClassSearchInput?.value || '');
+                    }
+                });
+
+                const rootEntityInput = document.getElementById('rootEntityInput');
+                const selectRootButton = document.getElementById('selectRootButton');
+                const resetRootButton = document.getElementById('resetRootButton');
+                const centerSelectedEntityButton = document.getElementById('centerSelectedEntityButton');
+                const qaApiKeyInput = document.getElementById('qaApiKeyInput');
+                const qaModelInput = document.getElementById('qaModelInput');
+                const handleQaSettingsChange = () => {
+                    saveQaSettings();
+                    setQaControlsDisabled(false);
+                };
+                if (qaApiKeyInput) {
+                    qaApiKeyInput.addEventListener('input', handleQaSettingsChange);
+                }
+                if (qaModelInput) {
+                    qaModelInput.addEventListener('input', handleQaSettingsChange);
+                }
+                document.querySelectorAll('input[name="qaProvider"]').forEach(radio => {
+                    radio.addEventListener('change', () => {
+                        const provider = getQaProvider();
+                        if (qaApiKeyInput) {
+                            qaApiKeyInput.value = '';
+                            qaApiKeyInput.placeholder = provider === 'openrouter'
+                                ? 'OpenRouter API 키 입력 | Enter OpenRouter API key (브라우저에만 저장)'
+                                : 'OpenAI API 키 입력 | Enter OpenAI API key (브라우저에만 저장)';
+                            try {
+                                const saved = localStorage.getItem(getQaApiKeyStorageKey(provider)) || '';
+                                qaApiKeyInput.value = saved;
+                            } catch (error) {
+                            }
+                        }
+                        handleQaSettingsChange();
+                    });
+                });
+                const generateQaButton = document.getElementById('generateQaButton');
+
+                const handleRootSelection = () => {
+                    const value = rootEntityInput.value.trim();
+                    if (!selectRootEntity(value)) {
+                        rootEntityInput.value = '';
+                    }
+                };
+
+                selectRootButton.addEventListener('click', handleRootSelection);
+                rootEntityInput.addEventListener('keydown', event => {
+                    if (event.key === 'Enter') {
+                        event.preventDefault();
+                        handleRootSelection();
+                    }
+                });
+                resetRootButton.addEventListener('click', () => {
+                    rootEntityInput.value = '';
+                    state.rootEntityId = null;
+                    clearActiveElement();
+                });
+
+                centerSelectedEntityButton.addEventListener('click', () => {
+                    if (state.activeElement?.type !== 'node') {
+                        return;
+                    }
+                    focusNodeInView(state.activeElement.id);
+                });
+
+                generateQaButton.addEventListener('click', () => {
+                    generateQaFromInputUrl();
+                });
+
+                // document.getElementById('relationsTable').addEventListener('click', event => {
+                //     const row = event.target.closest('tr');
+                //     if (!row) {
+                //         return;
+                //     }
+                //     const edgeId = row.getAttribute('data-edge');
+                //     if (edgeId) {
+                //         setActiveElement({ type: 'edge', id: edgeId });
+                //     }
+                // });
+
+                const searchInput = document.getElementById('searchInput');
+                const nodeSizeSlider = document.getElementById('nodeSizeSlider');
+                const generateReportButton = document.getElementById('generateReportButton');
+                const printReportButton = document.getElementById('printReportButton');
+                const decreaseNodeSizeButton = document.getElementById('decreaseNodeSizeButton');
+                const increaseNodeSizeButton = document.getElementById('increaseNodeSizeButton');
+                const resetNodeSizeButton = document.getElementById('resetNodeSizeButton');
+                const visibleEntitySlider = document.getElementById('visibleEntitySlider');
+                const resetVisibleEntityButton = document.getElementById('resetVisibleEntityButton');
+
+                updateNodeSizeLabel();
+                updateVisibleEntityLabel();
+
+                loadQaSettings();
+                setQaControlsDisabled(false);
+                if (!getQaApiKey() && !(qaRuntime.enabled && qaRuntime.endpoint)) {
+                    setQaStatus('API 키 필요 | API Key Required', 'Q&A 탭 상단에서 프로바이더(OpenAI/OpenRouter)를 선택하고 API 키를 입력하면 서버 없이 브라우저에서 직접 생성합니다. 키는 localStorage에만 저장됩니다.');
+                }
+
+                nodeSizeSlider.addEventListener('input', event => {
+                    applyNodeScale(Number(event.target.value));
+                });
+
+                decreaseNodeSizeButton.addEventListener('click', () => {
+                    applyNodeScale(state.nodeScale - NODE_SCALE_STEP);
+                });
+
+                increaseNodeSizeButton.addEventListener('click', () => {
+                    applyNodeScale(state.nodeScale + NODE_SCALE_STEP);
+                });
+
+                resetNodeSizeButton.addEventListener('click', () => {
+                    applyNodeScale(1);
+                });
+
+                visibleEntitySlider.addEventListener('input', event => {
+                    applyVisibleEntityRatio(Number(event.target.value));
+                });
+
+                resetVisibleEntityButton.addEventListener('click', () => {
+                    applyVisibleEntityRatio(1);
+                });
+
+                searchInput.addEventListener('input', () => {
+                    state.searchTerm = searchInput.value.trim();
+                    updateHighlights();
+
+                    // Notify parent about search change
+                    if (window.parent !== window && state.sidebarDisabled) {
+                        window.parent.postMessage({
+                            type: 'searchChanged',
+                            searchTerm: state.searchTerm
+                        }, '*');
+                    }
+                });
+                searchInput.addEventListener('keydown', event => {
+                    if (event.key === 'Escape') {
+                        searchInput.value = '';
+                        state.searchTerm = '';
+                        updateHighlights();
+                    }
+                });
+
+                document.querySelectorAll('.tab').forEach(tab => {
+                    tab.addEventListener('click', event => {
+                        const target = event.currentTarget;
+                        document.querySelectorAll('.tab').forEach(button => button.classList.remove('active'));
+                        target.classList.add('active');
+                        const tabId = target.getAttribute('data-tab');
+                        document.querySelectorAll('.tab-panel').forEach(panel => {
+                            panel.classList.toggle('active', panel.id === tabId);
+                        });
+                    });
+                });
+
+                const GLOSSARY_TERMS = [
+                    { ko: '노드', en: 'Node', desc: '그래프의 점 하나 = 엔티티 하나입니다. 혜택04 같은 개별 개념이 노드가 됩니다.', example: '예: 혜택04 노드를 클릭하면 해당 혜택의 연결과 출처가 표시됩니다.' },
+                    { ko: '엔티티', en: 'Entity', desc: '원문에서 추출된 핵심 개념(상품, 혜택, 브랜드, 조건 등)입니다.', example: '예: 쓱7클럽, 20% 쿠폰, 룸슈즈' },
+                    { ko: '관계', en: 'Relation', desc: '두 노드를 잇는 선으로, 주어–서술어–목적어(triple) 형태입니다.', example: '예: 쓱7클럽 혜택 → 7% 적립 → 혜택' },
+                    { ko: '엣지', en: 'Edge', desc: '관계와 같은 말로, 화면상의 연결선 하나를 가리킵니다.', example: '예: 엣지 e12 = 혜택04 —전용→ 쓱7클럽 전용 상품' },
+                    { ko: '서술어', en: 'Predicate', desc: '관계의 종류(이유·방식)를 나타내는 라벨입니다.', example: '예: 전용, 포함, 제공, 할인' },
+                    { ko: '차수', en: 'Degree', desc: '노드에 연결된 선의 총 개수입니다. 클수록 허브 개념입니다.', example: '예: 혜택04 전체 차수 23 = 나가는 12 + 들어오는 11' },
+                    { ko: '전체 차수', en: 'Total Degree', desc: '나가는 연결과 들어오는 연결을 합한 값입니다.', example: '예: Total Degree 23' },
+                    { ko: '나가는 연결', en: 'Outgoing', desc: '해당 노드가 출발점(주어)인 관계의 수입니다.', example: '예: 혜택04 Outgoing 12' },
+                    { ko: '들어오는 연결', en: 'Incoming', desc: '해당 노드가 도착점(목적어)인 관계의 수입니다.', example: '예: 혜택04 Incoming 11' },
+                    { ko: '이웃 노드', en: 'Neighbors', desc: '직접 선으로 연결된 주변 노드 목록입니다.', example: '예: 20% 쿠폰, SSG.COM, 쓱7클럽' },
+                    { ko: '클러스터', en: 'Cluster', desc: '의미가 비슷한 노드·관계를 묶은 그룹입니다.', example: '예: 쿠폰 관련 엔티티 묶음' },
+                    { ko: '미분류', en: 'Unclustered', desc: '어느 클러스터에도 속하지 않은 항목입니다.', example: '예: 혜택04 — 미분류' },
+                    { ko: '대표 엔티티', en: 'Representative', desc: '클러스터를 대표하는 기준 노드입니다.', example: '예: 클러스터 ID와 같은 이름의 노드' },
+                    { ko: '루트 엔티티', en: 'Root Entity', desc: '탐색의 시작점으로 선택한 중심 노드입니다.', example: '예: 혜택04를 루트로 선택하면 이웃이 강조됩니다.' },
+                    { ko: '연결 요소', en: 'Connected Component', desc: '서로 이어진 노드들의 덩어리입니다. 여러 개면 그래프가 분리된 것입니다.', example: '예: Components 3 = 덩어리 3개' },
+                    { ko: '고립 엔티티', en: 'Isolated Entity', desc: '연결선이 하나도 없는 노드입니다.', example: '예: Isolated 0 = 전부 연결됨' },
+                    { ko: '평균 차수', en: 'Average Degree', desc: '노드당 평균 연결 수로, 그래프 밀집도를 보여줍니다.', example: '예: Average Degree 2.4' },
+                    { ko: '밀도', en: 'Density', desc: '가능한 연결 중 실제 연결의 비율(0~1)입니다.', example: '예: Density 0.012' },
+                    { ko: '물리적 출처', en: 'Physical Provenance', desc: '노드·관계가 원문 어디에서 왔는지 보여주는 근거 정보입니다.', example: '예: 문서 #3, 242–246자, 8.9% 지점 + 인용 스니펫' },
+                    { ko: '원문 언급', en: 'Mention', desc: '엔티티 문자열이 원문에 등장한 위치입니다.', example: '예: 혜택04 언급 1회 · 문서 1개' },
+                    { ko: '동시 언급 문서', en: 'Co-mention Docs', desc: '관계의 출발·도착 엔티티가 같은 문서에 함께 나온 경우입니다.', example: '예: subject@608, object@4547, 간격 3939자' },
+                    { ko: '문자 위치', en: 'Character Offset', desc: '문서 텍스트 기준 글자 인덱스(charStart–charEnd)입니다.', example: '예: 242–246 / 전체 2720자' },
+                    { ko: '문서 내 위치', en: 'Position Percent', desc: '문서 전체 길이 대비 언급 지점의 백분율입니다.', example: '예: 8.9% 지점 = 문서 앞부분' },
+                    { ko: '수집 경로', en: 'Crawl Source', desc: '페이지 수집 방식(sitemap 또는 same_domain)입니다.', example: '예: same_domain = 동일 도메인 크롤링' },
+                    { ko: 'Q&A', en: 'Q&A', desc: '선택 엔티티·페이지 원문 기반으로 생성되는 질문/답변 10쌍입니다.', example: '예: Q&A 탭에서 URL 기준으로 생성' },
+                ];
+
+                function renderGlossary(filterText = '') {
+                    const grid = document.getElementById('glossaryGrid');
+                    if (!grid) {
+                        return;
+                    }
+                    const needle = filterText.trim().toLowerCase();
+                    const filtered = GLOSSARY_TERMS.filter(term => {
+                        if (!needle) {
+                            return true;
+                        }
+                        return `${term.ko} ${term.en} ${term.desc} ${term.example}`.toLowerCase().includes(needle);
+                    });
+                    grid.innerHTML = filtered.length ? filtered.map(term => `
+                        <div class="glossary-card">
+                            <h3>${escapeHtml(term.ko)} <span class="en">| ${escapeHtml(term.en)}</span></h3>
+                            <p>${escapeHtml(term.desc)}</p>
+                            <div class="example">${escapeHtml(term.example)}</div>
+                        </div>
+                    `).join('') : '<div class="provenance-empty">검색 결과가 없습니다. | No matching terms.</div>';
+                }
+
+                const glossarySearchInput = document.getElementById('glossarySearchInput');
+                if (glossarySearchInput) {
+                    glossarySearchInput.addEventListener('input', event => {
+                        renderGlossary(event.target.value || '');
+                    });
+                }
+                renderGlossary();
+
+                function setReportStatus(message, detail = '') {
+                    const status = document.getElementById('reportStatus');
+                    if (!status) {
+                        return;
+                    }
+                    status.innerHTML = `<strong>${message}</strong>${detail ? `<br />${detail}` : ''}`;
+                }
+
+                function buildReportBar(label, value, maxValue, color) {
+                    const pct = maxValue > 0 ? Math.round((value / maxValue) * 100) : 0;
+                    return `
+                        <div class="report-bar-row">
+                            <div>${escapeHtml(label)}</div>
+                            <div class="report-bar-track"><div class="report-bar-fill" style="width: ${pct}%; background: ${color};"></div></div>
+                            <div style="text-align: right; font-variant-numeric: tabular-nums;">${value}</div>
+                        </div>
+                    `;
+                }
+
+                function generateOntologyReport() {
+                    const content = document.getElementById('reportContent');
+                    if (!content) {
+                        return;
+                    }
+                    const generatedAt = new Date().toLocaleString('ko-KR');
+                    const stats = vizData.stats || {};
+                    const nodes = [...vizData.nodes].sort((a, b) => b.degree - a.degree || a.label.localeCompare(b.label, 'ko'));
+                    const edges = [...vizData.edges];
+                    const clusters = [...(vizData.clusters || [])].sort((a, b) => b.size - a.size);
+                    const edgeClusters = [...(vizData.edgeClusters || [])].sort((a, b) => b.size - a.size);
+                    const docs = [...(vizData.sourceDocuments || [])];
+                    const build = vizData.buildInfo || {};
+                    const clusterNote = vizData.clusterProvenance === 'heuristic'
+                        ? '표시 시점 휴리스틱 분류 (저장된 클러스터 없음)'
+                        : '저장된 클러스터 기준';
+
+                    const hubEntities = nodes.slice(0, 10);
+                    const maxDegree = hubEntities.length ? hubEntities[0].degree : 0;
+                    const unclustered = nodes.filter(n => !n.cluster);
+                    const isolated = nodes.filter(n => n.degree === 0);
+                    const withMentions = nodes.filter(n => (n.provenance?.mentionCount || 0) > 0);
+                    const withoutMentions = nodes.filter(n => !(n.provenance?.mentionCount > 0));
+                    const edgesWithEvidence = edges.filter(e => (e.provenance?.supportingDocs?.length || 0) > 0);
+
+                    const predicateCounts = new Map();
+                    edges.forEach(e => predicateCounts.set(e.predicate, (predicateCounts.get(e.predicate) || 0) + 1));
+                    const topPredicates = [...predicateCounts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10);
+                    const maxPredicate = topPredicates.length ? topPredicates[0][1] : 0;
+
+                    const docCoverage = docs.map((doc, idx) => {
+                        const mentioned = nodes.filter(n => (n.provenance?.mentions || []).some(m => m.docIndex === (doc.docIndex ?? idx))).length;
+                        return { doc, mentioned };
+                    }).sort((a, b) => b.mentioned - a.mentioned);
+                    const maxDocMention = docCoverage.length ? docCoverage[0].mentioned : 0;
+
+                    const understanding = [];
+                    if (hubEntities.length) {
+                        understanding.push(`페이지 정보는 <strong>${escapeHtml(hubEntities[0].label)}</strong>(차수 ${hubEntities[0].degree})를 중심으로 이해되고 있으며, 상위 3개 허브(${(hubEntities.slice(0, 3).map(n => escapeHtml(n.label)).join(', '))})가 전체 관계의 흐름을 주도합니다.`);
+                    }
+                    if (clusters.length) {
+                        understanding.push(`주제 구조는 <strong>${escapeHtml(clusters[0].label)}</strong>(${clusters[0].size}개) 등 ${clusters.length}개 클러스터로 나뉘어 ${clusterNote}로 파악됩니다.`);
+                    }
+                    if (topPredicates.length) {
+                        understanding.push(`가장 빈번한 관계 유형은 <strong>${escapeHtml(topPredicates[0][0])}</strong>(${topPredicates[0][1]}회)로, 정보 전달의 주된 서술 방식입니다.`);
+                    }
+                    const evidenceRate = edges.length ? Math.round((edgesWithEvidence.length / edges.length) * 100) : 0;
+                    understanding.push(`전체 관계 중 <strong>${evidenceRate}%</strong>(${edgesWithEvidence.length}/${edges.length})가 원문 동시 언급 근거를 가지며, 나머지는 LLM 추론 기반 연결입니다.`);
+                    if (isolated.length) {
+                        understanding.push(`고립 엔티티 ${isolated.length}개는 다른 개념과 연결되지 않아 정보 흐름에서 벗어나 있습니다.`);
+                    }
+                    if (withoutMentions.length) {
+                        understanding.push(`원문에서 정확히 일치하는 언급을 찾지 못한 엔티티가 ${withoutMentions.length}개 있어, 정규화·요약 과정에서 생성된 라벨로 보입니다.`);
+                    }
+
+                    content.innerHTML = `
+                        <div class="report-section">
+                            <h3>1. 개요 | Overview</h3>
+                            <p>생성 시각: ${escapeHtml(generatedAt)}${build.version ? ` · 빌드 ${escapeHtml(build.version)}` : ''} · 클러스터 기준: ${escapeHtml(clusterNote)}</p>
+                            <div class="report-kpi-grid">
+                                <div class="report-kpi"><div class="kpi-value">${stats.entities ?? nodes.length}</div><div class="kpi-label">엔티티 | Entities</div></div>
+                                <div class="report-kpi"><div class="kpi-value">${stats.relations ?? edges.length}</div><div class="kpi-label">관계 | Relations</div></div>
+                                <div class="report-kpi"><div class="kpi-value">${stats.relationTypes ?? predicateCounts.size}</div><div class="kpi-label">관계 유형 | Predicates</div></div>
+                                <div class="report-kpi"><div class="kpi-value">${stats.entityClusters ?? clusters.length}</div><div class="kpi-label">엔티티 클러스터</div></div>
+                                <div class="report-kpi"><div class="kpi-value">${stats.edgeClusters ?? edgeClusters.length}</div><div class="kpi-label">관계 클러스터</div></div>
+                                <div class="report-kpi"><div class="kpi-value">${stats.components ?? '-'}</div><div class="kpi-label">연결 요소 | Components</div></div>
+                                <div class="report-kpi"><div class="kpi-value">${stats.averageDegree ?? '-'}</div><div class="kpi-label">평균 차수 | Avg Degree</div></div>
+                                <div class="report-kpi"><div class="kpi-value">${docs.length}</div><div class="kpi-label">수집 문서 | Documents</div></div>
+                            </div>
+                        </div>
+                        <div class="report-section">
+                            <h3>2. 정보 이해 요약 | How Pages Are Understood</h3>
+                            <ul>${understanding.map(item => `<li>${item}</li>`).join('')}</ul>
+                        </div>
+                        <div class="report-section">
+                            <h3>3. 핵심 허브 엔티티 TOP 10 | Hub Entities</h3>
+                            <p>차수가 높은 순 — 정보 전달의 중심축입니다. 클릭하면 네트워크에서 선택됩니다.</p>
+                            ${hubEntities.map(n => buildReportBar(`${n.label} (${n.cluster || '미분류'})`, n.degree, maxDegree, n.color)).join('')}
+                        </div>
+                        <div class="report-section">
+                            <h3>4. 주제 클러스터 | Topic Clusters</h3>
+                            <table class="report-table">
+                                <thead><tr><th>클러스터</th><th>규모</th><th>대표 멤버</th></tr></thead>
+                                <tbody>
+                                    ${clusters.map(c => `<tr><td><span class="legend-swatch" style="background: ${c.color}; display: inline-block; vertical-align: middle;"></span> ${escapeHtml(c.label)}</td><td>${c.size}</td><td>${escapeHtml((c.members || []).slice(0, 6).join(', '))}${(c.members || []).length > 6 ? ' …' : ''}</td></tr>`).join('') || '<tr><td colspan="3">클러스터 없음</td></tr>'}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="report-section">
+                            <h3>5. 주요 관계 유형 TOP 10 | Relation Types</h3>
+                            ${topPredicates.map(([predicate, count]) => buildReportBar(predicate, count, maxPredicate, '#2563eb')).join('')}
+                        </div>
+                        <div class="report-section">
+                            <h3>6. 문서별 커버리지 | Document Coverage</h3>
+                            <p>각 수집 문서에서 언급된 엔티티 수 — 어떤 페이지가 정보의 원천인지 보여줍니다.</p>
+                            ${docCoverage.map(({ doc, mentioned }) => `
+                                <div class="report-bar-row">
+                                    <div><a class="report-link" href="${escapeHtml(doc.url)}" target="_blank" rel="noopener">${escapeHtml(shortUrl(doc.url, 48))}</a><div class="meta">문서 #${Number(doc.docIndex ?? 0) + 1} · ${escapeHtml(doc.domain || '')} · ${doc.textLength ?? ''}자</div></div>
+                                    <div class="report-bar-track"><div class="report-bar-fill" style="width: ${maxDocMention ? Math.round((mentioned / maxDocMention) * 100) : 0}%; background: #0ea5e9;"></div></div>
+                                    <div style="text-align: right; font-variant-numeric: tabular-nums;">${mentioned}</div>
+                                </div>
+                            `).join('') || '<p>수집 문서 없음</p>'}
+                        </div>
+                        <div class="report-section">
+                            <h3>7. 근거 품질 | Evidence Quality</h3>
+                            <ul>
+                                <li>원문 언급이 있는 엔티티: ${withMentions.length}/${nodes.length} (${nodes.length ? Math.round((withMentions.length / nodes.length) * 100) : 0}%)</li>
+                                <li>언급 없음(추론 라벨 의심): ${withoutMentions.length}개 ${withoutMentions.length ? `— 예: ${escapeHtml(withoutMentions.slice(0, 5).map(n => n.label).join(', '))}` : ''}</li>
+                                <li>동시 언급 근거가 있는 관계: ${edgesWithEvidence.length}/${edges.length} (${evidenceRate}%)</li>
+                                <li>미분류 엔티티: ${unclustered.length}개 · 고립 엔티티: ${isolated.length}개</li>
+                            </ul>
+                        </div>
+                    `;
+
+                    content.querySelectorAll('.report-bar-row').forEach(row => {
+                        const label = row.querySelector('div')?.textContent || '';
+                        const hub = nodes.find(n => label.startsWith(n.label));
+                        if (hub) {
+                            row.style.cursor = 'pointer';
+                            row.title = '클릭하면 네트워크에서 선택됩니다';
+                            row.addEventListener('click', () => selectRootEntity(hub.id));
+                        }
+                    });
+
+                    setReportStatus('리포트 생성 완료 | Report Ready', `생성 시각: ${generatedAt} · 엔티티 ${nodes.length}개 · 관계 ${edges.length}개 기준`);
+                }
+
+                if (generateReportButton) {
+                    generateReportButton.addEventListener('click', generateOntologyReport);
+                }
+                if (printReportButton) {
+                    printReportButton.addEventListener('click', () => window.print());
+                }
+
+                function getEntityClassGroups() {
+                    const nodes = [...vizData.nodes].sort((a, b) => {
+                        if (b.degree !== a.degree) {
+                            return b.degree - a.degree;
+                        }
+                        return a.label.localeCompare(b.label, 'ko');
+                    });
+                    const unclustered = nodes.filter(node => !node.cluster);
+                    const representatives = nodes.filter(node => node.isRepresentative);
+                    const isolated = nodes.filter(node => node.degree === 0);
+                    const rootNode = state.rootEntityId ? nodeById[state.rootEntityId] : null;
+                    return [
+                        { id: 'unclustered', ko: '미분류', en: 'Unclustered', desc: '어느 클러스터에도 속하지 않은 엔티티', items: unclustered },
+                        { id: 'representative', ko: '대표 엔티티', en: 'Representative', desc: '클러스터를 대표하는 기준 노드', items: representatives },
+                        { id: 'root', ko: '루트 엔티티', en: 'Root Entity', desc: '현재 탐색의 시작점으로 선택된 중심 노드', items: rootNode ? [rootNode] : [] },
+                        { id: 'isolated', ko: '고립 엔티티', en: 'Isolated', desc: '연결선이 하나도 없는 노드 (차수 0)', items: isolated },
+                    ];
+                }
+
+                function renderEntityClasses(filterText = '') {
+                    const summary = document.getElementById('entityClassSummary');
+                    const groupsContainer = document.getElementById('entityClassGroups');
+                    if (!summary || !groupsContainer) {
+                        return;
+                    }
+                    const needle = filterText.trim().toLowerCase();
+                    const groups = getEntityClassGroups();
+
+                    summary.innerHTML = groups.map(group => `
+                        <div class="glossary-card">
+                            <h3>${group.ko} <span class="en">| ${group.en}</span></h3>
+                            <p>${group.items.length}개 | ${group.items.length} entities</p>
+                        </div>
+                    `).join('');
+
+                    groupsContainer.innerHTML = groups.map(group => {
+                        const filtered = group.items.filter(node => {
+                            if (!needle) {
+                                return true;
+                            }
+                            return `${node.label} ${node.cluster || ''}`.toLowerCase().includes(needle);
+                        }).slice(0, 60);
+                        const items = filtered.map(node => {
+                            const clusterLabel = node.cluster ? node.cluster : '미분류 | Unclustered';
+                            const isActive = state.activeElement?.type === 'node' && state.activeElement.id === node.id;
+                            return `
+                                <button class="list-item entity-item${isActive ? ' active' : ''}" data-entity="${node.id}">
+                                    <div>
+                                        <strong>${escapeHtml(node.label)}</strong>
+                                        <div class="meta">${escapeHtml(clusterLabel)} · 차수 ${node.degree} (→${node.outdegree}/←${node.indegree})</div>
+                                    </div>
+                                    <div class="pill">${group.ko}</div>
+                                </button>
+                            `;
+                        }).join('') || '<div class="provenance-empty">해당 분류에 엔티티가 없습니다. | No entities in this class.</div>';
+                        return `
+                            <div class="section">
+                                <h2>${group.ko} | ${group.en} (${group.items.length})</h2>
+                                <p class="glossary-lead" style="margin-bottom: 10px;">${group.desc}</p>
+                                <div class="list">${items}</div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+
+                const entityClassSearchInput = document.getElementById('entityClassSearchInput');
+                if (entityClassSearchInput) {
+                    entityClassSearchInput.addEventListener('input', event => {
+                        renderEntityClasses(event.target.value || '');
+                    });
+                }
+                renderEntityClasses();
+
+                function getRelationClassGroups() {
+                    const edges = [...vizData.edges];
+                    const byPredicate = new Map();
+                    edges.forEach(edge => {
+                        if (!byPredicate.has(edge.predicate)) {
+                            byPredicate.set(edge.predicate, []);
+                        }
+                        byPredicate.get(edge.predicate).push(edge);
+                    });
+                    const topPredicates = [...byPredicate.entries()]
+                        .sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0], 'ko'))
+                        .slice(0, 8);
+                    const clustered = edges.filter(edge => edge.cluster);
+                    const unclustered = edges.filter(edge => !edge.cluster);
+                    const withEvidence = edges.filter(edge => (edge.provenance?.supportingDocs?.length || 0) > 0);
+                    const withoutEvidence = edges.filter(edge => !(edge.provenance?.supportingDocs?.length > 0));
+                    return {
+                        topPredicates,
+                        groups: [
+                            { id: 'clustered', ko: '클러스터 관계', en: 'Clustered', desc: '엣지 클러스터에 속한 관계', items: clustered },
+                            { id: 'unclustered', ko: '미분류 관계', en: 'Unclustered', desc: '어느 엣지 클러스터에도 속하지 않은 관계', items: unclustered },
+                            { id: 'withEvidence', ko: '근거 있음', en: 'With Evidence', desc: '출발·도착 엔티티가 같은 문서에 함께 등장한 관계', items: withEvidence },
+                            { id: 'withoutEvidence', ko: '근거 없음', en: 'No Evidence', desc: '동시 언급 위치를 찾지 못한 관계', items: withoutEvidence },
+                        ],
+                    };
+                }
+
+                function renderRelationItem(edge) {
+                    const clusterLabel = edge.cluster ? edge.cluster : '미분류 | Unclustered';
+                    const evidenceCount = edge.provenance?.supportingDocs?.length || 0;
+                    const docCount = edge.provenance?.documentCount || 0;
+                    const firstSeen = edge.provenance?.firstSeen;
+                    const evidenceLabel = evidenceCount
+                        ? `근거 ${evidenceCount}건 · 문서 ${docCount}개` + (firstSeen ? ` · 대표 #${Number(firstSeen.docIndex || 0) + 1}` : '')
+                        : '근거 없음';
+                    const isActive = state.activeElement?.type === 'edge' && state.activeElement.id === edge.id;
+                    return `
+                        <button class="list-item relation-item${isActive ? ' active' : ''}" data-edge="${edge.id}" style="border-left-color: ${edge.color};">
+                            <div>
+                                <strong>${escapeHtml(edge.source)} → ${escapeHtml(edge.target)}</strong>
+                                <div class="meta">관계 | Relation: ${escapeHtml(edge.predicate)} · ${escapeHtml(clusterLabel)}</div>
+                                <div class="meta">${escapeHtml(evidenceLabel)}</div>
+                            </div>
+                            <div class="pill" style="background: ${edge.color}1a; border: 1px solid ${edge.color};">${escapeHtml(edge.predicate)}</div>
+                        </button>
+                    `;
+                }
+
+                function renderRelationClasses(filterText = '') {
+                    const summary = document.getElementById('relationClassSummary');
+                    const groupsContainer = document.getElementById('relationClassGroups');
+                    if (!summary || !groupsContainer) {
+                        return;
+                    }
+                    const needle = filterText.trim().toLowerCase();
+                    const matchEdge = edge => {
+                        if (!needle) {
+                            return true;
+                        }
+                        return `${edge.source} ${edge.predicate} ${edge.target} ${edge.cluster || ''}`.toLowerCase().includes(needle);
+                    };
+                    const { topPredicates, groups } = getRelationClassGroups();
+
+                    summary.innerHTML = groups.map(group => `
+                        <div class="glossary-card">
+                            <h3>${group.ko} <span class="en">| ${group.en}</span></h3>
+                            <p>${group.items.length}개 | ${group.items.length} relations</p>
+                        </div>
+                    `).join('');
+
+                    const predicateSections = topPredicates.map(([predicate, items]) => {
+                        const sample = items[0];
+                        const filtered = items.filter(matchEdge).slice(0, 20);
+                        const list = filtered.map(renderRelationItem).join('') || '<div class="provenance-empty">검색 결과가 없습니다. | No matching relations.</div>';
+                        return `
+                            <div class="section">
+                                <h2>서술어 | ${escapeHtml(predicate)} (${items.length})</h2>
+                                <p class="glossary-lead" style="margin-bottom: 10px;">클러스터: ${escapeHtml(sample?.cluster || '미분류 | Unclustered')} · 색상 <span class="legend-swatch" style="background: ${sample?.color || '#64748b'}; display: inline-block; vertical-align: middle;"></span></p>
+                                <div class="list">${list}</div>
+                            </div>
+                        `;
+                    }).join('');
+
+                    const classSections = groups.map(group => {
+                        const filtered = group.items.filter(matchEdge).slice(0, 40);
+                        const list = filtered.map(renderRelationItem).join('') || '<div class="provenance-empty">해당 분류에 관계가 없습니다. | No relations in this class.</div>';
+                        return `
+                            <div class="section">
+                                <h2>${group.ko} | ${group.en} (${group.items.length})</h2>
+                                <p class="glossary-lead" style="margin-bottom: 10px;">${group.desc}</p>
+                                <div class="list">${list}</div>
+                            </div>
+                        `;
+                    }).join('');
+
+                    groupsContainer.innerHTML = predicateSections + classSections;
+                }
+
+                const relationClassSearchInput = document.getElementById('relationClassSearchInput');
+                if (relationClassSearchInput) {
+                    relationClassSearchInput.addEventListener('input', event => {
+                        renderRelationClasses(event.target.value || '');
+                    });
+                }
+                renderRelationClasses();
+
+                document.getElementById('sidebarToggle').addEventListener('click', toggleSidebar);
+
+                // Listen for messages from parent
+                window.addEventListener('message', (event) => {
+                    if (event.data.type === 'disableInternalSidebar') {
+                        disableSidebar();
+                    } else if (event.data.type === 'search') {
+                        state.searchTerm = event.data.term || '';
+                        updateHighlights();
+                    } else if (event.data.type === 'focusCluster') {
+                        toggleClusterFocus(event.data.clusterId);
+                    } else if (event.data.type === 'focusPredicate') {
+                        togglePredicateFocus(event.data.predicate);
+                    } else if (event.data.type === 'focusEntity') {
+                        selectRootEntity(event.data.id);
+                    }
+                });
+
+            }
+
+            rebuildVisibleData();
+            renderStats();
+            renderTopLists();
+            renderClusters();
+            renderRootEntityOptions();
+            renderBuildVersion();
+            // renderRelationsTable();
+            // renderInsights();
+
+            // Delay network creation to ensure proper layout
+            setTimeout(() => {
+                createNetwork();
+                bindInteractions();
+            }, 100);
+        })();
+    </script>
+    <footer style="text-align:center;padding:12px;color:#64748b;font-size:0.9rem;border-top:1px solid #e2e8f0;">
+        AI Archive Co. LTD. All Right Reserved. since 2026.
+    </footer>
+</body>
+
+</html>

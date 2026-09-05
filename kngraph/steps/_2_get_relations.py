@@ -5,6 +5,8 @@ import dspy
 import litellm
 from pydantic import BaseModel, create_model, ValidationError
 
+from kngraph.utils.ollama_client import OllamaError, ollama_chat_json
+
 
 def parse_relations_response(
     raw_json: str,
@@ -98,13 +100,33 @@ def _create_relations_model(entities: List[str]):
     return RelationItem, RelationsResponse
 
 
+class LooseRelationItem(BaseModel):
+    subject: str
+    predicate: str
+    object: str
+
+
+class LooseRelationsResponse(BaseModel):
+    relations: List[LooseRelationItem]
+
+
+def _build_loose_relations_schema() -> dict:
+    schema = LooseRelationsResponse.model_json_schema()
+    schema['additionalProperties'] = False
+    if '$defs' in schema:
+        for def_schema in schema['$defs'].values():
+            if def_schema.get('type') == 'object':
+                def_schema['additionalProperties'] = False
+    return schema
+
+
 def _get_relations_litellm(
     input_data: str,
     entities: List[str],
     model: str,
     api_key: Optional[str] = None,
     api_base: Optional[str] = None,
-    temperature: float = 0.0,
+    temperature: float | None = None,
 ) -> List[Tuple[str, str, str]]:
     prompt_template = _load_relations_prompt()
     entities_str = "\n".join(f"- {e}" for e in entities)
@@ -140,7 +162,6 @@ Here is the source text to analyze:
             {"role": "system", "content": prompt_template},
             {"role": "user", "content": user_prompt},
         ],
-        "temperature": temperature,
         "text": {
             "format": {
                 "type": "json_schema",
@@ -151,6 +172,9 @@ Here is the source text to analyze:
         },
     }
 
+    if temperature is not None and "gpt-5" not in model:
+        kwargs["temperature"] = temperature
+
     if api_key:
         kwargs["api_key"] = api_key
     if api_base:
@@ -159,6 +183,76 @@ Here is the source text to analyze:
     response = litellm.responses(**kwargs)
     raw_json = response.output[-1].content[0].text
     return parse_relations_response(raw_json, entities, RelationsResponse)
+
+
+def _get_relations_ollama(
+    input_data: str,
+    entities: List[str],
+    model: str,
+    api_base: Optional[str] = None,
+    temperature: float | None = None,
+    progress_label: str | None = None,
+) -> List[Tuple[str, str, str]]:
+    prompt_template = _load_relations_prompt()
+    entities_str = "\n".join(f"- {e}" for e in entities)
+    user_prompt = f"""
+Here is the list of entities that were previously extracted from the source text:
+
+<entities>
+{entities_str}
+</entities>
+
+Here is the source text to analyze:
+
+<text>
+{input_data}
+</text>
+    """
+
+    _, RelationsResponse = _create_relations_model(entities)
+    schema = RelationsResponse.model_json_schema()
+    schema['additionalProperties'] = False
+    if '$defs' in schema:
+        for def_schema in schema['$defs'].values():
+            if def_schema.get('type') == 'object':
+                def_schema['additionalProperties'] = False
+
+    try:
+        raw_json = ollama_chat_json(
+            model=model,
+            messages=[
+                {'role': 'system', 'content': prompt_template},
+                {'role': 'user', 'content': user_prompt},
+            ],
+            schema=schema,
+            api_base=api_base,
+            temperature=temperature,
+            progress_label=progress_label,
+        )
+        return parse_relations_response(raw_json, entities, RelationsResponse)
+    except OllamaError:
+        fallback_prompt = (
+            user_prompt
+            + '\n\nReturn only valid JSON matching this shape exactly: '
+            + '{"relations": [{"subject": "...", "predicate": "...", "object": "..."}]}. '
+            + 'Use only values from the provided entities list for subject and object. '
+            + 'If there are no valid relations, return {"relations": []}.'
+        )
+        try:
+            raw_json = ollama_chat_json(
+                model=model,
+                messages=[
+                    {'role': 'system', 'content': prompt_template},
+                    {'role': 'user', 'content': fallback_prompt},
+                ],
+                schema=_build_loose_relations_schema(),
+                api_base=api_base,
+                temperature=temperature,
+                progress_label=(f'{progress_label} 재시도' if progress_label else '관계 추출 재시도'),
+            )
+            return parse_relations_response(raw_json, entities, LooseRelationsResponse)
+        except OllamaError:
+            return []
 
 
 def extraction_sig(
@@ -229,10 +323,22 @@ def get_relations(
     model: Optional[str] = None,
     api_key: Optional[str] = None,
     api_base: Optional[str] = None,
-    temperature: float = 0.0,
+    temperature: float | None = None,
+    use_ollama: bool = False,
+    progress_label: str | None = None,
 ) -> List[Tuple[str, str, str]]:
     # Filter out entities containing backslashes
     entities = _filter_entities(entities)
+
+    if use_ollama and not is_conversation:
+        return _get_relations_ollama(
+            input_data,
+            entities,
+            model=model,
+            api_base=api_base,
+            temperature=temperature,
+            progress_label=progress_label,
+        )
 
     if use_litellm_prompt and not is_conversation:
         return _get_relations_litellm(

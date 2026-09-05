@@ -1,5 +1,5 @@
 import unicodedata
-from kg_gen.models import Graph
+from kngraph.models import Graph
 from semhash import SemHash
 import inflect
 
@@ -65,15 +65,25 @@ class DeduplicateList:
             normalized_items.add(singular)
 
         # Deduplicate the normalized strings
+        if len(normalized_items) == 0:
+            # No records to deduplicate — set stats and exit gracefully
+            self.deduplicated_items = 0
+            self.duplicate_items = 0
+            self.reduction = 0.0
+            self.deduplicated = []
+            return self.deduplicated
+
         semhash = SemHash.from_records(records=list(normalized_items))
         deduplication_result = semhash.self_deduplicate(threshold=self.threshold)
 
+        filtered_duplicates = getattr(deduplication_result, "filtered", [])
+
         self.deduplicated_items = len(deduplication_result.selected)
-        self.duplicate_items = len(deduplication_result.duplicates)
+        self.duplicate_items = len(filtered_duplicates)
         self.reduction = (self.duplicate_items / self.total_items) * 100
 
         # Map back to original strings
-        duplicates = deduplication_result.duplicates
+        duplicates = filtered_duplicates
         for duplicate in duplicates:
             original = duplicate.record
             # Check if duplicates list is not empty before accessing

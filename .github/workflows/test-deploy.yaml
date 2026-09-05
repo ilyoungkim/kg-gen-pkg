@@ -14,7 +14,7 @@ on:
       test_project_id:
         description: 'GCP Project ID for test deployment (only used in test-deploy mode)'
         required: false
-        default: 'kggen-ai'
+        default: 'kngraph-ai'
         type: string
 
 env:

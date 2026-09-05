@@ -17,7 +17,7 @@ from dotenv import load_dotenv
 load_dotenv()
 import logging
 from pathlib import Path
-from src.kg_gen import Graph
+from src.kngraph import Graph
 import dspy
 from concurrent.futures import ThreadPoolExecutor
 import faiss

@@ -1,5 +1,5 @@
 """
-Test the MCP server functionality of kg-gen.
+Test the MCP server functionality of kngraph.
 This tests the server integration, tools, and memory management.
 """
 

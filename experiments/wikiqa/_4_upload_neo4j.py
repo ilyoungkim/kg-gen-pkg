@@ -31,8 +31,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
-from kg_gen.models import Graph  # type: ignore
-from kg_gen.utils.neo4j_integration import (  # type: ignore
+from kngraph.models import Graph  # type: ignore
+from kngraph.utils.neo4j_integration import (  # type: ignore
     upload_to_neo4j,
     Neo4jUploader,
 )

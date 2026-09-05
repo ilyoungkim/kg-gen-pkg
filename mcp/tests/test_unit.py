@@ -15,7 +15,7 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from server import (
-    initialize_kg_gen,
+    initialize_kngraph,
     load_memory_graph,
     save_memory_graph,
     memory_graph,
@@ -54,7 +54,7 @@ def sample_graph_data():
 
 
 class TestInitializeKGGen:
-    """Test the initialize_kg_gen function."""
+    """Test the initialize_kngraph function."""
 
     @patch.dict(
         os.environ,
@@ -64,17 +64,17 @@ class TestInitializeKGGen:
             "KG_STORAGE_PATH": "./test_storage.json",
         },
     )
-    @patch("server.KGGen")
+    @patch("server.KNGraph")
     @patch("server.load_memory_graph")
-    def test_initialize_with_env_vars(self, mock_load, mock_kg_gen):
+    def test_initialize_with_env_vars(self, mock_load, mock_kngraph):
         """Test initialization with environment variables."""
         mock_instance = MagicMock()
-        mock_kg_gen.return_value = mock_instance
+        mock_kngraph.return_value = mock_instance
 
-        result = initialize_kg_gen()
+        result = initialize_kngraph()
 
-        # Verify KGGen was called with correct parameters
-        mock_kg_gen.assert_called_once_with(
+        # Verify KNGraph was called with correct parameters
+        mock_kngraph.assert_called_once_with(
             model="test-model", temperature=0.0, api_key="test-key"
         )
 
@@ -84,17 +84,17 @@ class TestInitializeKGGen:
         assert result == mock_instance
 
     @patch.dict(os.environ, {}, clear=True)
-    @patch("server.KGGen")
+    @patch("server.KNGraph")
     @patch("server.load_memory_graph")
-    def test_initialize_with_defaults(self, mock_load, mock_kg_gen):
+    def test_initialize_with_defaults(self, mock_load, mock_kngraph):
         """Test initialization with default values."""
         mock_instance = MagicMock()
-        mock_kg_gen.return_value = mock_instance
+        mock_kngraph.return_value = mock_instance
 
-        result = initialize_kg_gen()
+        result = initialize_kngraph()
 
-        # Verify KGGen was called with defaults
-        mock_kg_gen.assert_called_once_with(
+        # Verify KNGraph was called with defaults
+        mock_kngraph.assert_called_once_with(
             model="openai/gpt-4o", temperature=0.0, api_key=None
         )
 
@@ -271,12 +271,12 @@ class TestEnvironmentHandling:
         test_env = {"OPENAI_API_KEY": "openai-key", "KG_MODEL": "test-model"}
 
         with patch.dict(os.environ, test_env, clear=True):
-            with patch("server.KGGen") as mock_kg_gen:
+            with patch("server.KNGraph") as mock_kngraph:
                 with patch("server.load_memory_graph"):
-                    initialize_kg_gen()
+                    initialize_kngraph()
 
                     # Should use OPENAI_API_KEY as fallback
-                    mock_kg_gen.assert_called_once_with(
+                    mock_kngraph.assert_called_once_with(
                         model="test-model", temperature=0.0, api_key="openai-key"
                     )
 
@@ -289,11 +289,11 @@ class TestEnvironmentHandling:
         }
 
         with patch.dict(os.environ, test_env, clear=True):
-            with patch("server.KGGen") as mock_kg_gen:
+            with patch("server.KNGraph") as mock_kngraph:
                 with patch("server.load_memory_graph"):
-                    initialize_kg_gen()
+                    initialize_kngraph()
 
                     # Should use KG_API_KEY
-                    mock_kg_gen.assert_called_once_with(
+                    mock_kngraph.assert_called_once_with(
                         model="test-model", temperature=0.0, api_key="kg-key"
                     )

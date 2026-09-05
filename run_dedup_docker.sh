@@ -8,8 +8,8 @@ set -e
 SCRIPT=examples/dedup_graph.py
 
 # Build the Docker image
-echo "🐳 Building Docker container for kg-gen scripts..."
-docker build -f Dockerfile -t kg-gen-dedup-graph .
+echo "🐳 Building Docker container for kngraph scripts..."
+docker build -f Dockerfile -t kngraph-dedup-graph .
 echo "✅ Docker image built successfully!"
 
 # Check if the script exists
@@ -30,6 +30,6 @@ docker run --rm \
     -v "$(pwd)/output:/workspace/output" \
     -v "$(pwd)/logs:/workspace/logs" \
     --env-file .env \
-    kg-gen-dedup-graph python "$SCRIPT" "$@"
+    kngraph-dedup-graph python "$SCRIPT" "$@"
 
 echo "✅ Script execution completed! Check the output/ directory for results."

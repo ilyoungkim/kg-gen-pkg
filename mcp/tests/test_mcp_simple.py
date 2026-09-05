@@ -26,7 +26,7 @@ def test_mcp_server_structure():
     assert server.mcp is not None
 
     # Check that global variables are defined
-    assert hasattr(server, "kg_gen_instance")
+    assert hasattr(server, "kngraph_instance")
     assert hasattr(server, "memory_graph")
     assert hasattr(server, "storage_path")
 
@@ -85,7 +85,7 @@ def test_tool_functions_have_docstrings():
 
 
 def test_add_memories_no_instance():
-    """Test add_memories when no KGGen instance exists."""
+    """Test add_memories when no KNGraph instance exists."""
     import sys
 
     server_dir = str(Path(__file__).parent.parent)
@@ -94,23 +94,23 @@ def test_add_memories_no_instance():
 
     import server
 
-    with patch("server.kg_gen_instance", None):
+    with patch("server.kngraph_instance", None):
         with patch("server.memory_graph", None):
-            with patch("server.initialize_kg_gen") as mock_init:
-                mock_kg_gen = MagicMock()
+            with patch("server.initialize_kngraph") as mock_init:
+                mock_kngraph = MagicMock()
                 mock_graph = MagicMock()
                 mock_graph.entities = {"test"}
                 mock_graph.relations = {("a", "b", "c")}
-                mock_kg_gen.generate.return_value = mock_graph
-                mock_kg_gen.aggregate.return_value = mock_graph
-                mock_init.return_value = mock_kg_gen
+                mock_kngraph.generate.return_value = mock_graph
+                mock_kngraph.aggregate.return_value = mock_graph
+                mock_init.return_value = mock_kngraph
 
                 with patch("server.save_memory_graph", return_value=True):
                     # Set the global variable that the function will modify
-                    with patch("server.kg_gen_instance", mock_kg_gen):
+                    with patch("server.kngraph_instance", mock_kngraph):
                         result = server.add_memories.fn("Test text")
 
-                # Should have attempted to initialize kg_gen
+                # Should have attempted to initialize kngraph
                 assert isinstance(result, str)
                 assert "Successfully extracted and stored memories" in result
 
@@ -188,7 +188,7 @@ def test_visualize_memories_with_data():
         output_path = os.path.join(temp_dir, "test.html")
 
         with patch("server.memory_graph", mock_graph):
-            with patch("server.KGGen.visualize") as mock_visualize:
+            with patch("server.KNGraph.visualize") as mock_visualize:
                 result = server.visualize_memories.fn(output_path)
 
         assert isinstance(result, str)
@@ -251,11 +251,11 @@ def test_error_handling_in_add_memories():
 
     import server
 
-    # Mock KGGen to raise an exception
-    mock_kg_gen = MagicMock()
-    mock_kg_gen.generate.side_effect = Exception("Test error")
+    # Mock KNGraph to raise an exception
+    mock_kngraph = MagicMock()
+    mock_kngraph.generate.side_effect = Exception("Test error")
 
-    with patch("server.kg_gen_instance", mock_kg_gen):
+    with patch("server.kngraph_instance", mock_kngraph):
         result = server.add_memories.fn("Test text")
 
     assert isinstance(result, str)

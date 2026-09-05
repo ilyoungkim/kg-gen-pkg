@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-GCP_PROJECT_ID=${GCP_PROJECT_ID:-kggen-ai}
+GCP_PROJECT_ID=${GCP_PROJECT_ID:-kngraph-ai}
 CLOUD_RUN_SERVICE=${CLOUD_RUN_SERVICE:-app-test}
 CLOUD_RUN_REGION=${CLOUD_RUN_REGION:-us-central1}
 ARTIFACT_REGISTRY_REPO=${ARTIFACT_REGISTRY_REPO:-app}

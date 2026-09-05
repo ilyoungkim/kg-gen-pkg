@@ -2,7 +2,7 @@ from typing import List
 from scipy.spatial.distance import cdist
 from concurrent.futures import ThreadPoolExecutor
 import dspy
-from kg_gen.models import Graph
+from kngraph.models import Graph
 import logging
 from sklearn.metrics.pairwise import cosine_similarity
 from rank_bm25 import BM25Okapi

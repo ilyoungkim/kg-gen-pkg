@@ -1,9 +1,9 @@
-from src.kg_gen import KGGen
+from src.kngraph import KNGraph
 import os
 from fixtures import kg
 
 
-def test_chunked(kg: KGGen):
+def test_chunked(kg: KNGraph):
     with open("tests/data/kingkiller_chapter_one.txt", "r", encoding="utf-8") as f:
         text = f.read()
 
@@ -48,7 +48,7 @@ def test_chunked(kg: KGGen):
     )
 
 
-def test_chunk_and_cluster(kg: KGGen):
+def test_chunk_and_cluster(kg: KNGraph):
     # Load fresh wiki content
     with open("tests/data/fresh_wiki_article.md", "r", encoding="utf-8") as f:
         text = f.read()

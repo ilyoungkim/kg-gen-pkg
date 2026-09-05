@@ -1,5 +1,5 @@
-from src.kg_gen import KGGen
-from src.kg_gen.models import Graph
+from src.kngraph import KNGraph
+from src.kngraph.models import Graph
 import os
 from fixtures import kg
 from dotenv import load_dotenv
@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-def test_basic_clustering(kg: KGGen):
+def test_basic_clustering(kg: KNGraph):
     # Create a simple graph with redundant entities and edges
     graph = Graph(
         entities={"cat", "cats", "kitten", "dog", "dogs", "puppy"},
@@ -78,7 +78,7 @@ def test_basic_clustering(kg: KGGen):
     assert len(chase_cluster) >= 1  # At least one chase-related term
 
 
-def test_method_level_configuration(kg: KGGen):
+def test_method_level_configuration(kg: KNGraph):
     graph = Graph(
         entities={"cat", "cats", "dog", "dogs"},
         edges={"likes", "like"},
@@ -96,7 +96,7 @@ def test_method_level_configuration(kg: KGGen):
     assert clustered.edge_clusters is not None
 
 
-def test_case_sensitivity_clustering(kg: KGGen):
+def test_case_sensitivity_clustering(kg: KNGraph):
     # Create a graph with case variations
     graph = Graph(
         entities={"Person", "person", "PERSON", "Book", "BOOK", "book"},
@@ -146,7 +146,7 @@ def test_case_sensitivity_clustering(kg: KGGen):
     assert found_reads
 
 
-def test_semantic_clustering(kg: KGGen):
+def test_semantic_clustering(kg: KNGraph):
     # Create a graph with semantically similar items
     graph = Graph(
         entities={"happy", "joyful", "glad", "sad", "unhappy", "gloomy", "person"},
@@ -186,7 +186,7 @@ def test_semantic_clustering(kg: KGGen):
     assert found_positive and found_negative
 
 
-def test_no_invalid_clustering(kg: KGGen):
+def test_no_invalid_clustering(kg: KNGraph):
     # Create a graph with distinct items that shouldn't be clustered
     graph = Graph(
         entities={"apple", "banana", "carrot", "dog", "farmer"},
@@ -226,7 +226,7 @@ def test_no_invalid_clustering(kg: KGGen):
         assert found
 
 
-def test_empty_graph_clustering(kg: KGGen):
+def test_empty_graph_clustering(kg: KNGraph):
     # Test with empty graph
     empty_graph = Graph(entities=set(), edges=set(), relations=set())
     clustered = kg.cluster(empty_graph)
@@ -238,7 +238,7 @@ def test_empty_graph_clustering(kg: KGGen):
     assert clustered.edge_clusters == {}
 
 
-def test_single_item_clustering(kg: KGGen):
+def test_single_item_clustering(kg: KNGraph):
     # Test with single items
     graph = Graph(
         entities={"person", "home"},
@@ -276,7 +276,7 @@ def test_single_item_clustering(kg: KGGen):
 
 def test_configuration_override():
     # Initialize with one set of configurations
-    kg_gen = KGGen(
+    kngraph = KNGraph(
         model="no-model",
         api_key="no-api-key",
         temperature=0.0,
@@ -290,7 +290,7 @@ def test_configuration_override():
     )
 
     # Override with different configurations in cluster method
-    clustered = kg_gen.cluster(
+    clustered = kngraph.cluster(
         graph,
         model=os.getenv("LLM_MODEL"),  # Different model
         temperature=float(os.getenv("LLM_TEMPERATURE", "1.0")),  # Different temperature
@@ -303,7 +303,7 @@ def test_configuration_override():
     assert clustered.edge_clusters is not None
 
 
-def test_large_scale_clustering(kg: KGGen):
+def test_large_scale_clustering(kg: KNGraph):
     # Create a larger graph with multiple cluster opportunities
     graph = Graph(
         entities={
@@ -427,7 +427,7 @@ def test_large_scale_clustering(kg: KGGen):
         )
 
 
-def test_clustering_with_context(kg: KGGen):
+def test_clustering_with_context(kg: KNGraph):
     # Create a graph with potentially ambiguous terms that should be clarified by context
     graph = Graph(
         entities={
@@ -535,7 +535,7 @@ def test_clustering_with_context(kg: KGGen):
             assert "teller" not in cluster
 
 
-def test_semhash_deduplication(kg: KGGen):
+def test_semhash_deduplication(kg: KNGraph):
     """
     Test SEMHASH deduplication method.
     SEMHASH should catch:
@@ -547,7 +547,7 @@ def test_semhash_deduplication(kg: KGGen):
     - True synonyms (CEO/Chief Executive Officer)
     - Semantic equivalents (joyful/happy)
     """
-    from src.kg_gen.steps._3_deduplicate import DeduplicateMethod
+    from src.kngraph.steps._3_deduplicate import DeduplicateMethod
     
     graph = Graph(
         entities={
@@ -604,7 +604,7 @@ def test_semhash_deduplication(kg: KGGen):
     print(f"Original edges: {len(graph.edges)}, Deduplicated: {len(deduplicated.edges)}")
 
 
-def test_lm_based_deduplication(kg: KGGen):
+def test_lm_based_deduplication(kg: KNGraph):
     """
     Test LM_BASED deduplication method.
     LM_BASED should catch:
@@ -615,7 +615,7 @@ def test_lm_based_deduplication(kg: KGGen):
     
     This is what distinguishes LM_BASED from SEMHASH - it understands meaning.
     """
-    from src.kg_gen.steps._3_deduplicate import DeduplicateMethod
+    from src.kngraph.steps._3_deduplicate import DeduplicateMethod
     
     graph = Graph(
         entities={
@@ -674,7 +674,7 @@ def test_lm_based_deduplication(kg: KGGen):
     print(f"Deduplicated edges: {deduplicated.edges}")
 
 
-def test_full_deduplication_comprehensive(kg: KGGen):
+def test_full_deduplication_comprehensive(kg: KNGraph):
     """
     Test FULL deduplication method.
     FULL method runs SEMHASH first, then LM_BASED, so it should catch:
@@ -684,7 +684,7 @@ def test_full_deduplication_comprehensive(kg: KGGen):
     This is the most comprehensive approach.
     Since FULL = SEMHASH + LM_BASED, it catches both structural and semantic duplicates.
     """
-    from src.kg_gen.steps._3_deduplicate import DeduplicateMethod
+    from src.kngraph.steps._3_deduplicate import DeduplicateMethod
     
     graph = Graph(
         entities={

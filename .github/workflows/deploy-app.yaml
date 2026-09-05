@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 env:
-  GCP_PROJECT_ID: kggen-ai
+  GCP_PROJECT_ID: kngraph-ai
   CLOUD_RUN_SERVICE: app
   CLOUD_RUN_REGION: us-central1
   ARTIFACT_REGISTRY_REPO: app

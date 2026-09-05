@@ -1,4 +1,4 @@
-from src.kg_gen import KGGen
+from src.kngraph import KNGraph
 from fixtures import kg
 
 
@@ -25,7 +25,7 @@ def match_subset(set1: set[str], set2: set[str]) -> bool:
     return True
 
 
-def test_basic(kg: KGGen):
+def test_basic(kg: KNGraph):
     # Generate a simple graph
     text = "Harry has two parents - his dad James Potter and his mom Lily Potter. Harry and his wife Ginny have three kids together: their oldest son James Sirius, their other son Albus, and their daughter Lily Luna."
 
@@ -44,7 +44,7 @@ def test_basic(kg: KGGen):
     assert match_subset(expected_entities, graph.entities)
 
 
-def test_clustered(kg: KGGen):
+def test_clustered(kg: KNGraph):
     # Test texts
     text1 = "Linda is Joshua's mother. Ben is Josh's brother. Andrew is Josh's father."
     text2 = "Judy is Andrew's sister. Josh is Judy's nephew. Judy is Josh's aunt. Josh also goes by Joshua."
@@ -107,7 +107,7 @@ def test_clustered(kg: KGGen):
     print("Edge Clusters:", clustered_graph.edge_clusters)
 
 
-def test_conversation(kg: KGGen):
+def test_conversation(kg: KNGraph):
     messages = [
         {"role": "user", "content": "What is the capital of France?"},
         {"role": "assistant", "content": "The capital of France is Paris."},

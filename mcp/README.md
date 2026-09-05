@@ -1,10 +1,10 @@
-# kg-gen MCP Server: Agent Memory with Knowledge Graphs
+# kngraph MCP Server: Agent Memory with Knowledge Graphs
 
-This directory contains the Model Context Protocol (MCP) server for kg-gen, providing agents with persistent memory capabilities through knowledge graph extraction and storage.
+This directory contains the Model Context Protocol (MCP) server for kngraph, providing agents with persistent memory capabilities through knowledge graph extraction and storage.
 
 ## What is MCP?
 
-The [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) is an open standard that enables AI applications to provide context to LLMs in a secure, controlled way. This kg-gen MCP server allows AI agents to:
+The [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) is an open standard that enables AI applications to provide context to LLMs in a secure, controlled way. This kngraph MCP server allows AI agents to:
 
 - `add_memories`: **Extract and store memories** from unstructured text
 - `retrieve_relevant_memories`: **Retrieve relevant memories** based on queries  
@@ -18,8 +18,8 @@ These tools are also provided for visibility:
 ### Installation
 
 ```bash
-# Install kg-gen with MCP support
-pip install kg-gen
+# Install kngraph with MCP support
+pip install kngraph
 
 # MCP dependencies are installed automatically when first needed
 ```
@@ -28,13 +28,13 @@ pip install kg-gen
 
 ```bash
 # Start MCP server (clears memory by default for fresh start)
-kggen mcp
+kngraph mcp
 
 # Keep existing memory
-kggen mcp --keep-memory
+kngraph mcp --keep-memory
 
 # Use custom model and storage
-kggen mcp --model gemini/gemini-2.0-flash --storage-path ./my_memory.json
+kngraph mcp --model gemini/gemini-2.0-flash --storage-path ./my_memory.json
 ```
 
 ### Configuration
@@ -131,14 +131,14 @@ Memory Statistics:
 
 ### Fresh Start vs. Persistent Memory
 
-By default, `kggen mcp` clears existing memory on startup to provide a clean slate for each session:
+By default, `kngraph mcp` clears existing memory on startup to provide a clean slate for each session:
 
 ```bash
 # Fresh start (default) - clears existing memory
-kggen mcp
+kngraph mcp
 
 # Persistent memory - keeps existing memory
-kggen mcp --keep-memory
+kngraph mcp --keep-memory
 ```
 
 ### Storage Path Resolution
@@ -147,9 +147,9 @@ Storage paths are resolved relative to where you call the command:
 
 ```bash
 # From /home/user/project/
-kggen mcp                                    # → /home/user/project/kg_memory.json
-kggen mcp --storage-path ./data/memory.json  # → /home/user/project/data/memory.json
-kggen mcp --storage-path /abs/path/mem.json  # → /abs/path/mem.json
+kngraph mcp                                    # → /home/user/project/kg_memory.json
+kngraph mcp --storage-path ./data/memory.json  # → /home/user/project/data/memory.json
+kngraph mcp --storage-path /abs/path/mem.json  # → /abs/path/mem.json
 ```
 
 ## Integration Examples
@@ -162,7 +162,7 @@ Add to your Claude Desktop MCP configuration:
 {
   "mcpServers": {
     "kg-memory": {
-      "command": "kggen",
+      "command": "kngraph",
       "args": ["mcp", "--keep-memory"],
       "env": {
         "KG_MODEL": "openai/gpt-4o",
@@ -182,7 +182,7 @@ from mcp.client.stdio import stdio_client
 
 async def use_kg_memory():
     server_params = StdioServerParameters(
-        command="kggen",
+        command="kngraph",
         args=["mcp"],
         env={"OPENAI_API_KEY": "your-api-key"}
     )
@@ -228,30 +228,30 @@ The server supports any model compatible with [LiteLLM](https://docs.litellm.ai/
 
 ```bash
 # OpenAI models
-kggen mcp --model openai/gpt-4o-mini
+kngraph mcp --model openai/gpt-4o-mini
 
 # Anthropic models  
-kggen mcp --model anthropic/claude-3-sonnet-20240229
+kngraph mcp --model anthropic/claude-3-sonnet-20240229
 
 # Google models
-kggen mcp --model gemini/gemini-2.0-flash
+kngraph mcp --model gemini/gemini-2.0-flash
 
 # Local models via Ollama
-kggen mcp --model ollama_chat/llama3.2:3b
+kngraph mcp --model ollama_chat/llama3.2:3b
 ```
 
 ### Memory Persistence Patterns
 
 ```bash
 # Development: Fresh memory each session
-kggen mcp
+kngraph mcp
 
 # Production: Persistent memory across sessions
-kggen mcp --keep-memory --storage-path /persistent/path/memory.json
+kngraph mcp --keep-memory --storage-path /persistent/path/memory.json
 
 # Project-specific: Memory per project
 cd /path/to/project
-kggen mcp --keep-memory  # Uses ./kg_memory.json in project directory
+kngraph mcp --keep-memory  # Uses ./kg_memory.json in project directory
 ```
 
 ## Testing

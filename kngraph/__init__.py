@@ -1,4 +1,4 @@
-from .kg_gen import KGGen
+from .kngraph import KNGraph
 from .models import Graph
 from .utils.neo4j_integration import (
     Neo4jUploader,

@@ -18,6 +18,14 @@ class Graph(BaseModel):
     entity_metadata: dict[str, set[str]] | None = None
 
     @staticmethod
+    def _extract_graph_payload(data: dict[str, Any]) -> dict[str, Any]:
+        return {
+            key: value
+            for key, value in data.items()
+            if not str(key).startswith("_")
+        }
+
+    @staticmethod
     def from_file(file_path: str) -> "Graph":
         """
         Load the graph from a file.
@@ -25,7 +33,7 @@ class Graph(BaseModel):
         """
         with open(file_path, "r", encoding="utf-8") as f:
             data = json.load(f)
-            graph = Graph.model_validate(data)
+            graph = Graph.model_validate(Graph._extract_graph_payload(data))
 
         # Fix graph entities and edges
         for relation in graph.relations:

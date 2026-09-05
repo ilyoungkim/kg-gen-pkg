@@ -1,6 +1,6 @@
-from kg_gen.models import Graph
-from kg_gen.utils.deduplicate import run_semhash_deduplication
-from kg_gen.utils.llm_deduplicate import LLMDeduplicate
+from kngraph.models import Graph
+from kngraph.utils.deduplicate import run_semhash_deduplication
+from kngraph.utils.llm_deduplicate import LLMDeduplicate
 from sentence_transformers import SentenceTransformer
 import dspy
 import enum
@@ -15,7 +15,7 @@ class DeduplicateMethod(enum.Enum):
 
 
 def run_deduplication(
-    lm: dspy.LM,
+    lm: dspy.LM | None,
     graph: Graph,
     method: DeduplicateMethod = DeduplicateMethod.FULL,
     retrieval_model: SentenceTransformer | None = None,
@@ -23,6 +23,8 @@ def run_deduplication(
 ) -> Graph:
     if method != DeduplicateMethod.SEMHASH and retrieval_model is None:
         raise ValueError("No retrieval model provided")
+    if method != DeduplicateMethod.SEMHASH and lm is None:
+        raise ValueError("No language model provided")
 
     if method == DeduplicateMethod.SEMHASH:
         deduplicated_graph = run_semhash_deduplication(

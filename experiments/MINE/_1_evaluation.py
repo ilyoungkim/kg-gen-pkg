@@ -1,10 +1,10 @@
 from dotenv import load_dotenv
 import dspy
 from datasets import load_dataset
-from kg_gen.steps._3_deduplicate import DeduplicateMethod
+from kngraph.steps._3_deduplicate import DeduplicateMethod
 import numpy as np
 import networkx as nx
-from kg_gen.kg_gen import KGGen
+from kngraph.kngraph import KNGraph
 import json
 import sys
 import os
@@ -56,7 +56,7 @@ def gpt_evaluate_response(correct_answer: str, context: str) -> int:
 
 
 def evaluate_accuracy(
-    kggen: KGGen,
+    kngraph: KNGraph,
     queries: list[dict],
     node_embeddings: dict[str, np.ndarray],
     graph: nx.DiGraph,
@@ -69,7 +69,7 @@ def evaluate_accuracy(
     results = []
 
     for query in queries:
-        *_, context_text = kggen.retrieve(query, node_embeddings, graph)
+        *_, context_text = kngraph.retrieve(query, node_embeddings, graph)
         evaluation = gpt_evaluate_response(query, context_text)
         result = {
             "correct_answer": query,
@@ -92,7 +92,7 @@ def process_single_evaluation(
     i: int,
     data: dict | str,
     queries: list[dict],
-    kggen: KGGen,
+    kngraph: KNGraph,
     evaluation_model: str,
     model_name: str,
     reasoning_effort: str | None,
@@ -132,16 +132,16 @@ def process_single_evaluation(
 
         if evaluation_model == "local":
             # Generate the graph from text
-            graph = kggen.generate(data, deduplication_method=method, no_dspy=no_dspy)
+            graph = kngraph.generate(data, deduplication_method=method, no_dspy=no_dspy)
             kg_output_file = f"experiments/MINE/results/{dir_name}/kg_{i}.json"
-            KGGen.export_graph(graph, kg_output_file)
+            KNGraph.export_graph(graph, kg_output_file)
         else:
-            graph = kggen.from_dict(data)
+            graph = kngraph.from_dict(data)
 
-        nxGraph = kggen.to_nx(graph)
-        node_embeddings, _ = kggen.generate_embeddings(nxGraph)
+        nxGraph = kngraph.to_nx(graph)
+        node_embeddings, _ = kngraph.generate_embeddings(nxGraph)
         evaluate_accuracy(
-            kggen,
+            kngraph,
             queries,
             node_embeddings,
             nxGraph,
@@ -157,8 +157,8 @@ def main(
     api_key_env: str = "OPENAI_API_KEY",
     api_base_url: str | None = None,
     # local: means re-run the KG generation step
-    # kggen: means use the KG generated and saved in the huggingface dataset, same for graphrag and openie
-    evaluation_model: Literal["local", "kggen", "graphrag", "openie"] = "local",
+    # kngraph: means use the KG generated and saved in the huggingface dataset, same for graphrag and openie
+    evaluation_model: Literal["local", "kngraph", "graphrag", "openie"] = "local",
     reasoning_effort: str = None,
     temperature: float = 1.0,
     deduplication_method: Literal["semhash", "full"] | None = "semhash",
@@ -166,19 +166,19 @@ def main(
     max_workers: int = 64,
 ):
     # Load data from Hugging Face (with local fallback)
-    dataset = load_dataset("josancamon/kg-gen-MINE-evaluation-dataset")["train"]
+    dataset = load_dataset("josancamon/kngraph-MINE-evaluation-dataset")["train"]
     queries = [item["generated_queries"] for item in dataset.to_list()]
 
     if evaluation_model == "local":
         kg_data = [item["essay_content"] for item in dataset.to_list()]
-    elif evaluation_model == "kggen":
-        kg_data = [item["kggen"] for item in dataset.to_list()]
+    elif evaluation_model == "kngraph":
+        kg_data = [item["kngraph"] for item in dataset.to_list()]
     elif evaluation_model == "graphrag":
         kg_data = [item["graphrag_kg"] for item in dataset.to_list()]
     elif evaluation_model == "openie":
         kg_data = [item["openie_kg"] for item in dataset.to_list()]
 
-    kggen = KGGen(
+    kngraph = KNGraph(
         retrieval_model="all-MiniLM-L6-v2",
         reasoning_effort=reasoning_effort,
         temperature=temperature,
@@ -202,7 +202,7 @@ def main(
                 i,
                 kg,
                 queries,
-                kggen,
+                kngraph,
                 evaluation_model,
                 model,
                 reasoning_effort,

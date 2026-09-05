@@ -1,5 +1,5 @@
 from datasets import load_dataset
-from kg_gen.kg_gen import KGGen
+from kngraph.kngraph import KNGraph
 import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import json
@@ -40,8 +40,8 @@ def process_article(article_data):
     title = article_data["title"]
     text = article_data["text"]
 
-    # Initialize KGGen in this thread
-    kg = KGGen(
+    # Initialize KNGraph in this thread
+    kg = KNGraph(
         model="openai/gpt-5-nano",
         api_key=os.getenv("OPENAI_API_KEY"),
         temperature=1.0,

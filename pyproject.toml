@@ -1,5 +1,5 @@
 [project]
-name = "kg-gen"
+name = "kngraph"
 version = "0.4.0"
 authors = [{ name = "Belinda Mo", email = "justanexperimentpark@gmail.com" }]
 description = "Extract a knowledge graph using LLMs from any text or messages array"
@@ -19,6 +19,9 @@ dependencies = [
     "pre-commit>=4.3.0",
     "ty>=0.0.1a21",
     "openai>=1.108.1",
+    "litellm",
+    "curl-cffi",
+    "beautifulsoup4",
     "sentence-transformers>=5.1.0",
     "tqdm>=4.67.1",
     "datasets>=4.4.1",
@@ -52,19 +55,25 @@ dev = [
 mcp = ["fastmcp>=2.10.6", "mcp>=1.12.1"]
 
 [project.scripts]
-kggen = "kg_gen.cli:main"
+kngraph = "kngraph.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/stair-lab/kg-gen"
-Issues = "https://github.com/stair-lab/kg-gen/issues"
+Homepage = "https://github.com/stair-lab/kngraph"
+Issues = "https://github.com/stair-lab/kngraph/issues"
 
 [build-system]
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
+[tool.uv]
+constraint-dependencies = ["litellm<1.82.7"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
 [tool.setuptools.package-data]
-"kg_gen.utils" = ["template.html"]
-"kg_gen.prompts" = ["*.txt"]
+"kngraph.utils" = ["template.html"]
+"kngraph.prompts" = ["*.txt"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests", "mcp/tests"]
