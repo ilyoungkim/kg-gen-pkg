@@ -1,5 +1,10 @@
 # kngraph: Knowledge Graph Generation from Any Text
 
+> **Fork notice**: 이 저장소는 [stair-lab/kg-gen](https://github.com/stair-lab/kg-gen)을 기반으로 수정된 포크입니다.
+> 원본 대비 변경점: gpt-5 계열 모델 지원(temperature 제거·max_tokens 16000 등 하드코딩 수정),
+> 패키지명 변경(`kg_gen` → `kngraph`), runner/qa/config CLI 모듈(`analyze`/`configure`/`qa-server`) 추가,
+> 인터랙티브 대시보드 템플릿(Q&A·리포트·분류 탭 등) 확장.
+
 📄 [**Paper**](https://arxiv.org/abs/2502.09956) | 🐍 [**Package**](https://pypi.org/project/kngraph/) | 🤖 [**MCP**](https://github.com/stair-lab/kngraph/tree/main/mcp/) | 🔬 [**Experiments**](https://github.com/stair-lab/kngraph/tree/main/experiments/) | 👩🏻‍💻 [**Dataset**](https://huggingface.co/datasets/belindamo/wiki_qa_kngraph) | 🐦 [**X Updates**](https://x.com/belindmo)
 
 Welcome! `kngraph` helps you extract knowledge graphs from any plain text using AI. It can process both small and large text inputs, and it can also handle messages in a conversation format.
