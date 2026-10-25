@@ -41,7 +41,7 @@ pip install kngraph
 
 ## Security Note
 
-- This repository constrains LiteLLM to `litellm<1.82.7` due to the compromised PyPI `1.82.7` and `1.82.8` releases.
+- This repository constrains LiteLLM to `litellm>=1.82.9,<2.0` to avoid the compromised PyPI `1.82.7` and `1.82.8` releases.
 - The current locked environments use safe versions only.
 - If you previously installed either compromised version, recreate your virtual environment before continuing.
 - As part of the mitigation, the local environments were checked for `litellm_init.pth` and no such startup hook was found.

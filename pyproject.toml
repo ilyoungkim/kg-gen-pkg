@@ -4,10 +4,9 @@ version = "0.4.0"
 authors = [{ name = "Belinda Mo", email = "justanexperimentpark@gmail.com" }]
 description = "Extract a knowledge graph using LLMs from any text or messages array"
 readme = "README.md"
-requires-python = ">=3.10, <4.0"
+requires-python = ">=3.11, <4.0"
 classifiers = [
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
@@ -67,7 +66,7 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.uv]
-constraint-dependencies = ["litellm<1.82.7"]
+constraint-dependencies = ["litellm>=1.82.9,<2.0"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
