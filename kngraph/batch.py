@@ -110,10 +110,15 @@ def run_batch(
     chrome_path: str | None = None,
     cdp_url: str | None = None,
     profile_dir: str | None = None,
+    merge_output: str | Path | None = None,
 ) -> dict[str, Any]:
     """Run the analyze pipeline for every URL in ``urls_path``.
 
     Returns a summary dict with one :class:`BatchItem` per unique URL.
+
+    When ``merge_output`` is set, every per-URL ``sources.json`` produced by
+    the run is merged into a single ``graph.json``/``graph.html`` under that
+    directory (no re-crawl, one LLM pass over the combined documents).
     """
     from kngraph.runner import analyze
 
@@ -185,7 +190,7 @@ def run_batch(
     succeeded = [item for item in items if item.status == "ok"]
     failed = [item for item in items if item.status == "failed"]
 
-    return {
+    summary = {
         "urlsPath": str(urls_path),
         "outputRoot": str(root),
         "crawlMode": "browser" if browser else "http",
@@ -196,6 +201,75 @@ def run_batch(
         "elapsedSeconds": round(time.time() - started_at, 1),
         "items": [item.to_dict() for item in items],
     }
+
+    if merge_output and not dry_run:
+        merged = merge_batch_outputs(
+            output_root=root,
+            merge_output=merge_output,
+            config_path=config_path,
+            model=model,
+            verbose=verbose,
+        )
+        summary["mergedOutput"] = merged
+    elif merge_output:
+        print(f"(dry-run) 병합 예정: {root} -> {Path(merge_output)}", flush=True)
+
+    return summary
+
+
+def merge_batch_outputs(
+    *,
+    output_root: str | Path,
+    merge_output: str | Path,
+    config_path: str | Path | None = None,
+    model: str | None = None,
+    verbose: bool = False,
+) -> dict[str, Any]:
+    """Merge every per-URL ``sources.json`` under ``output_root`` into one graph.
+
+    Collects all ``sources.json`` files produced by the batch run (one per
+    URL slug directory), passes them to :func:`kngraph.regenerate.regenerate`
+    so the documents are deduplicated by URL and combined into a single
+    ``graph.json`` + ``graph.html`` under ``merge_output``. No re-crawl; the
+    LLM extraction runs once over the union of the collected pages.
+    """
+    from kngraph.regenerate import collect_source_files, regenerate
+
+    root = Path(output_root)
+    source_files = collect_source_files(root)
+    if not source_files:
+        print("병합할 sources.json 을 찾지 못했습니다.", flush=True)
+        return {"error": "no sources.json found"}
+
+    merge_dir = Path(merge_output)
+    merge_dir.mkdir(parents=True, exist_ok=True)
+    graph_path = merge_dir / "graph.json"
+    html_path = merge_dir / "graph.html"
+
+    print(
+        f"병합 시작: {len(source_files)}개 sources.json -> {html_path}",
+        flush=True,
+    )
+    result = regenerate(
+        sources=[str(path) for path in source_files],
+        output=str(graph_path),
+        html=str(html_path),
+        model=model,
+        config_path=config_path,
+        reuse_graph=False,
+        verbose=verbose,
+        open_browser=False,
+    )
+
+    merged = {
+        "output": result.get("output"),
+        "html": result.get("html"),
+        "buildVersion": result.get("build_version"),
+        "sourceDocuments": result.get("source_documents"),
+        "graphSummary": result.get("graph_summary"),
+    }
+    print(f"병합 완료: {html_path}", flush=True)
+    return merged
 
 
 def write_batch_report(summary: dict[str, Any], output_dir: str | Path) -> dict[str, str]:

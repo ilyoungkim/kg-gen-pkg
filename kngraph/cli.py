@@ -166,6 +166,10 @@ def main():
     batch_parser.add_argument("--dry-run", action="store_true", help="List planned work without running")
     batch_parser.add_argument("--no-report", action="store_true", help="Do not write the batch report")
     batch_parser.add_argument(
+        "--merge-output", default=None,
+        help="After the batch, merge all per-URL sources.json into one graph.html here",
+    )
+    batch_parser.add_argument(
         "--browser", action="store_true",
         help="Crawl with a real Chrome over CDP instead of plain HTTP",
     )
@@ -327,6 +331,7 @@ def main():
                 chrome_path=args.chrome_path,
                 cdp_url=args.cdp_url,
                 profile_dir=args.profile_dir,
+                merge_output=args.merge_output,
             )
         except ValueError as exc:
             print(str(exc), file=sys.stderr)

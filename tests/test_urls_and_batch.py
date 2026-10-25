@@ -132,3 +132,58 @@ def test_build_slug_handles_root_path():
     slug = build_slug("https://www.ssg.com")
 
     assert slug == "www.ssg.com/root"
+
+
+def test_merge_batch_outputs_calls_regenerate(tmp_path: Path, monkeypatch):
+    """Merge collects per-URL sources.json and delegates to regenerate."""
+    import kngraph.regenerate as regenerate_mod
+
+    # Lay out two per-URL source dirs under the batch root.
+    root = tmp_path / "batch"
+    for slug in ("www.ssg.com/a", "event.ssg.com/b"):
+        (root / slug).mkdir(parents=True)
+        (root / slug / "sources.json").write_text(
+            '[{"url": "https://example.com/x", "text": "hello"}]',
+            encoding="utf-8",
+        )
+
+    captured: dict = {}
+
+    def fake_regenerate(**kwargs):
+        captured.update(kwargs)
+        return {
+            "output": str(Path(kwargs["output"])),
+            "html": str(kwargs["html"]),
+            "build_version": "test",
+            "source_documents": 2,
+            "graph_summary": {"entity_count": 1, "edge_count": 0, "relation_count": 0},
+        }
+
+    monkeypatch.setattr(regenerate_mod, "regenerate", fake_regenerate)
+
+    from src.kngraph.batch import merge_batch_outputs
+
+    result = merge_batch_outputs(
+        output_root=root,
+        merge_output=tmp_path / "merged",
+        config_path="config.json",
+    )
+
+    # regenerate received every source file (2), and merged paths were chosen.
+    assert len(captured["sources"]) == 2
+    assert captured["output"].endswith("graph.json")
+    assert captured["html"].endswith("graph.html")
+    assert captured["config_path"] == "config.json"
+    assert result["sourceDocuments"] == 2
+
+
+def test_merge_batch_outputs_reports_error_when_empty(tmp_path: Path):
+    """Merge returns an error dict when no sources.json exist."""
+    from src.kngraph.batch import merge_batch_outputs
+
+    result = merge_batch_outputs(
+        output_root=tmp_path / "empty",
+        merge_output=tmp_path / "merged",
+    )
+
+    assert "error" in result
