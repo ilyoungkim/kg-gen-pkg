@@ -21,6 +21,7 @@ except ImportError:  # pragma: no cover - optional dependency
 
 DEFAULT_CHUNK_SIZE = 5000
 SOURCE_TEXT_LIMIT = 12000
+SOURCE_HTML_LIMIT = 200000
 QA_SOURCE_TEXT_LIMIT = 6000
 DEFAULT_QA_SERVER_HOST = '127.0.0.1'
 DEFAULT_QA_SERVER_PORT = 43870
@@ -28,6 +29,10 @@ DEFAULT_OLLAMA_MODEL = 'gemma4:e2b'
 DEFAULT_OLLAMA_API_BASE = 'http://127.0.0.1:11434'
 DEFAULT_ANALYZE_MODEL = 'openai/gpt-5-nano'
 DEFAULT_QA_MODEL = 'openai/gpt-5.6-luna'
+DEFAULT_OPENROUTER_MODEL = 'openai/gpt-oss-120b'
+DEFAULT_OPENROUTER_API_BASE = 'https://openrouter.ai/api/v1'
+# The visibility probe runs on the OpenRouter-hosted open model by default.
+DEFAULT_PROBE_MODEL = DEFAULT_OPENROUTER_MODEL
 BUILD_VERSION_SERIES = '1.0'
 BUILD_NUMBER_START = 1
 BUILD_VERSION_FILE_NAME = '.build_version.json'
@@ -100,6 +105,38 @@ def resolve_qa_model(cli_model: str | None = None) -> str:
         or os.getenv('KG_QA_MODEL')
         or os.getenv('KG_MODEL', DEFAULT_QA_MODEL)
     )
+
+
+def is_openrouter_model(model: str | None) -> bool:
+    """True when the model id should be routed through OpenRouter."""
+    if not model:
+        return False
+    normalized = model.strip().lower()
+    return normalized.startswith("openrouter/") or normalized.startswith("openai/gpt-oss")
+
+
+def resolve_openrouter_settings(
+    model: str | None = None,
+) -> tuple[str, str | None, str | None]:
+    """Resolve (model, api_key, api_base) for an OpenRouter-hosted model.
+
+    The OpenRouter key wins whenever an OpenRouter model is requested, so
+    `openai/gpt-oss-120b` never leaks to the OpenAI endpoint.
+    """
+    resolved_model = (
+        model
+        or os.getenv("KG_QA_MODEL")
+        or os.getenv("OPENROUTER_MODEL")
+        or DEFAULT_OPENROUTER_MODEL
+    )
+    resolved_model = resolved_model.removeprefix("openrouter/")
+    api_key = os.getenv("OPEN_ROUTER_API_KEY") or os.getenv("OPENROUTER_API_KEY")
+    api_base = (
+        os.getenv("KG_QA_API_BASE")
+        or os.getenv("OPENROUTER_API_BASE")
+        or DEFAULT_OPENROUTER_API_BASE
+    )
+    return resolved_model, api_key, api_base
 
 
 def read_user_config() -> dict[str, str]:

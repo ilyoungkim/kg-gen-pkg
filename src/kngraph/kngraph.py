@@ -447,6 +447,9 @@ class KNGraph:
         qa_runtime_config: Optional[Dict[str, Union[str, bool, None]]] = None,
         build_info: Optional[Dict[str, Union[str, int, None]]] = None,
         output_metadata: Optional[Dict[str, Union[str, int, list[str], None]]] = None,
+        source_html_documents: Optional[List[Dict[str, str]]] = None,
+        qa_pairs: Optional[List[Dict[str, str]]] = None,
+        qa_report: Optional[Dict[str, Any]] = None,
     ):
         visualize_kg(
             graph,
@@ -456,6 +459,9 @@ class KNGraph:
             qa_runtime_config=qa_runtime_config,
             build_info=build_info,
             output_metadata=output_metadata,
+            source_html_documents=source_html_documents,
+            qa_pairs=qa_pairs,
+            qa_report=qa_report,
         )
 
     # ====== Retrieval Methods ======

@@ -26,3 +26,6 @@ experiments/MINE/faiss-scikit/scikit-learn
 experiments/MINE/faiss-scikit/*.zip
 mlruns/
 examples/wikipedia/
+
+# Browser profile used by the browser crawl mode
+.browser-profile/

@@ -1,0 +1,357 @@
+{
+  "model": "openai/gpt-oss-120b",
+  "brand": [
+    {
+      "question": "ssg7club 멤버십 등급은 어떻게 구분되나요?",
+      "category": "fact",
+      "intent": "멤버십 등급 확인"
+    },
+    {
+      "question": "쓱7클럽 가입비는 얼마이며 결제 방식은 어떤 것이 있나요?",
+      "category": "fact",
+      "intent": "가입비 및 결제 방식 확인"
+    },
+    {
+      "question": "쓱세븐클럽의 기본 구성(포인트 적립률·쿠폰 종류)은 무엇인가요?",
+      "category": "fact",
+      "intent": "기본 구성 확인"
+    },
+    {
+      "question": "ssg7club에서 제공하는 월간 쿠폰은 언제 발급되나요?",
+      "category": "benefit",
+      "intent": "쿠폰 발급 시점 확인"
+    },
+    {
+      "question": "쓱7클럽 회원에게 주어지는 연말 사은품 종류는 어떤 것이 있나요?",
+      "category": "benefit",
+      "intent": "사은품 종류 확인"
+    },
+    {
+      "question": "쓱세븐클럽 포인트 적립 비율은 구매 금액 대비 몇 퍼센트인가요?",
+      "category": "benefit",
+      "intent": "포인트 적립 비율 확인"
+    },
+    {
+      "question": "ssg7club 포인트는 어떻게 현금처럼 사용할 수 있나요?",
+      "category": "usage",
+      "intent": "포인트 사용 방법 확인"
+    },
+    {
+      "question": "쓱7클럽 쿠폰을 모바일 앱에서 적용하려면 어떤 절차가 필요한가요?",
+      "category": "usage",
+      "intent": "모바일 쿠폰 적용 절차 확인"
+    },
+    {
+      "question": "쓱세븐클럽 적립금을 온라인 쇼핑몰에서 사용하는 방법을 알려 주세요.",
+      "category": "usage",
+      "intent": "온라인 사용 방법 확인"
+    },
+    {
+      "question": "ssg7club 회원 탈퇴는 언제든 가능한가요? 절차는 어떻게 되나요?",
+      "category": "policy",
+      "intent": "탈퇴 가능 여부 및 절차 확인"
+    },
+    {
+      "question": "쓱7클럽 포인트 소멸은 언제 발생하나요?",
+      "category": "policy",
+      "intent": "포인트 소멸 시점 확인"
+    },
+    {
+      "question": "쓱세븐클럽 회원 등급이 만료되면 어떤 혜택이 중단되나요?",
+      "category": "policy",
+      "intent": "등급 만료 시 혜택 확인"
+    },
+    {
+      "question": "ssg7club과 롯데멤버스의 포인트 적립률을 비교해 주세요.",
+      "category": "comparison",
+      "intent": "적립률 비교"
+    },
+    {
+      "question": "쓱7클럽과 쿠팡 와우 멤버십의 연회비 차이는 얼마나 되나요?",
+      "category": "comparison",
+      "intent": "연회비 차이 확인"
+    },
+    {
+      "question": "쓱세븐클럽이 제공하는 사은품은 다른 대형마트 멤버십과 어떤 점이 다른가요?",
+      "category": "comparison",
+      "intent": "사은품 차별점 확인"
+    },
+    {
+      "question": "저는 매주 대형마트에서 식료품을 구매하는데, ssg7club이 나에게 적합한지 알려 주세요.",
+      "category": "situation",
+      "intent": "개인 구매 패턴에 맞는지 평가"
+    },
+    {
+      "question": "온라인만 주로 쇼핑하고 오프라인 매장은 거의 안 가는데, 쓱7클럽 혜택을 충분히 활용할 수 있을까요?",
+      "category": "situation",
+      "intent": "온라인 사용 적합성 평가"
+    },
+    {
+      "question": "ssg7club에서 포인트 적립이 안 되는 품목은 무엇인가요?",
+      "category": "limitation",
+      "intent": "제외 품목 확인"
+    },
+    {
+      "question": "쓱세븐클럽 회원이 받을 수 없는 할인 혜택은 어떤 경우인가요?",
+      "category": "limitation",
+      "intent": "제한 할인 확인"
+    },
+    {
+      "question": "쓱7클럽을 운영하는 기업은 어디이며, 해당 기업의 연매출 규모는 어느 정도인가요?",
+      "category": "authority",
+      "intent": "운영사와 규모 확인"
+    }
+  ],
+  "discovery": [
+    {
+      "question": "가성비 좋은 전자제품을 추천해 주세요.",
+      "category": "product",
+      "intent": "가성비 좋은 상품 탐색"
+    },
+    {
+      "question": "이번 달에 특가 판매 중인 생활용품이 있나요?",
+      "category": "product",
+      "intent": "특가 상품 여부 확인"
+    },
+    {
+      "question": "새로 나온 스마트폰 중 리뷰가 좋은 모델은 뭐가 있을까?",
+      "category": "product",
+      "intent": "신상품 정보 확인"
+    },
+    {
+      "question": "가격 대비 성능이 좋은 노트북을 알려 주세요.",
+      "category": "product",
+      "intent": "가성비 좋은 상품 탐색"
+    },
+    {
+      "question": "한정 기간에만 판매되는 신상 패션 아이템이 있나요?",
+      "category": "product",
+      "intent": "신상품 및 특가 확인"
+    },
+    {
+      "question": "무료배송 조건을 만족하는 주문 방법이 뭔가요?",
+      "category": "purchase",
+      "intent": "무료배송 조건 확인"
+    },
+    {
+      "question": "한 번에 전체 결제하고 포인트를 적립할 수 있나요?",
+      "category": "purchase",
+      "intent": "일괄 결제 및 포인트 적립 여부"
+    },
+    {
+      "question": "장바구니에 담아두면 할인 혜택이 적용돼요?",
+      "category": "purchase",
+      "intent": "장바구니 할인 적용 여부"
+    },
+    {
+      "question": "무통장 입금 외에 사용할 수 있는 결제 수단은 뭐가 있나요?",
+      "category": "purchase",
+      "intent": "가능 결제 수단 확인"
+    },
+    {
+      "question": "신용카드 할부 결제 시 추가 혜택이 있나요?",
+      "category": "purchase",
+      "intent": "할부 결제 혜택 확인"
+    },
+    {
+      "question": "직장인 전용 혜택이 적용되는 제품이나 서비스를 알려 주세요.",
+      "category": "occupation",
+      "intent": "직장인 대상 할인/혜택 확인"
+    },
+    {
+      "question": "학생 신분증을 보여주면 받을 수 있는 할인 혜택이 있나요?",
+      "category": "occupation",
+      "intent": "학생 대상 할인 여부"
+    },
+    {
+      "question": "사업자를 위한 구매 적립이나 세금계산서 발행이 가능한가요?",
+      "category": "occupation",
+      "intent": "사업자 전용 혜택 확인"
+    },
+    {
+      "question": "프리랜서가 이용할 만한 비용 절감 프로모션이 있나요?",
+      "category": "occupation",
+      "intent": "프리랜서 대상 혜택 탐색"
+    },
+    {
+      "question": "교사 할인이나 교육 기관 전용 쿠폰이 있나요?",
+      "category": "occupation",
+      "intent": "교사·교육기관 할인 여부"
+    },
+    {
+      "question": "주말에 장을 보면 배송이 더 빨리 오나요?",
+      "category": "time",
+      "intent": "주말 배송 속도 확인"
+    },
+    {
+      "question": "마감 직전 구매 시 추가 포인트가 쌓이는 이벤트가 있나요?",
+      "category": "time",
+      "intent": "마감 전 구매 혜택 확인"
+    },
+    {
+      "question": "평일과 주말에 적용되는 할인율 차이가 있나요?",
+      "category": "time",
+      "intent": "시간대별 할인 차이 확인"
+    },
+    {
+      "question": "야간(새벽) 주문도 당일 출고가 가능한가요?",
+      "category": "time",
+      "intent": "새벽 주문 배송 가능 여부"
+    },
+    {
+      "question": "주말에만 진행되는 한정 쿠폰이 있나요?",
+      "category": "time",
+      "intent": "주말 한정 쿠폰 확인"
+    },
+    {
+      "question": "내가 현재 가입할 수 있는 멤버십 중 가성비 좋은 것은?",
+      "category": "membership",
+      "intent": "가성비 좋은 멤버십 추천"
+    },
+    {
+      "question": "멤버십 등급에 따라 받을 수 있는 추가 우대 혜택은?",
+      "category": "membership",
+      "intent": "등급별 우대 혜택 확인"
+    },
+    {
+      "question": "멤버십 가입 절차와 해지 방법을 알려 주세요.",
+      "category": "membership",
+      "intent": "가입·해지 방법 안내"
+    },
+    {
+      "question": "멤버십 포인트 적립 비율이 높은 상품군은 어디인가요?",
+      "category": "membership",
+      "intent": "포인트 적립률 높은 상품 탐색"
+    },
+    {
+      "question": "월 구독료가 저렴한 멤버십이 있나요?",
+      "category": "membership",
+      "intent": "저렴한 구독 멤버십 확인"
+    },
+    {
+      "question": "구독료 대비 실제 절감되는 금액을 계산해 보고 싶어요.",
+      "category": "price",
+      "intent": "구독료 대비 절감 효과 검토"
+    },
+    {
+      "question": "현재 진행 중인 최대 할인율은 몇 퍼센트인가요?",
+      "category": "price",
+      "intent": "최대 할인율 확인"
+    },
+    {
+      "question": "포인트 적립률이 높은 카테고리는 어디인가요?",
+      "category": "price",
+      "intent": "고적립률 카테고리 탐색"
+    },
+    {
+      "question": "정기구독 상품의 가격 대비 혜택을 비교해 주세요.",
+      "category": "price",
+      "intent": "정기구독 가성비 비교"
+    },
+    {
+      "question": "특정 금액 이상 구매 시 추가 할인 혜택이 있나요?",
+      "category": "price",
+      "intent": "금액별 추가 할인 여부"
+    },
+    {
+      "question": "현재 진행 중인 이벤트 기간은 언제부터 언제까지인가요?",
+      "category": "event",
+      "intent": "이벤트 기간 확인"
+    },
+    {
+      "question": "쿠폰을 다운로드받을 수 있는 앱이나 사이트가 있나요?",
+      "category": "event",
+      "intent": "쿠폰 다운로드 방법 안내"
+    },
+    {
+      "question": "이벤트 참여 시 받을 수 있는 경품 종류를 알려 주세요.",
+      "category": "event",
+      "intent": "경품 내용 확인"
+    },
+    {
+      "question": "한정판 제품을 먼저 받아볼 수 있는 사전 예약 방법이 있나요?",
+      "category": "event",
+      "intent": "한정판 사전예약 안내"
+    },
+    {
+      "question": "이벤트 기간 내에 구매하면 추가 적립 포인트가 쌓이나요?",
+      "category": "event",
+      "intent": "이벤트 적립 포인트 확인"
+    },
+    {
+      "question": "배송 기간이 가장 짧은 옵션은 무엇인가요?",
+      "category": "delivery",
+      "intent": "최단 배송 옵션 확인"
+    },
+    {
+      "question": "새벽배송을 신청할 수 있는 조건은 무엇인가요?",
+      "category": "delivery",
+      "intent": "새벽배송 조건 확인"
+    },
+    {
+      "question": "반품 시 배송비가 무료인 경우가 있나요?",
+      "category": "delivery",
+      "intent": "무료 반품 조건 확인"
+    },
+    {
+      "question": "제품 설치 서비스가 포함된 배송 옵션이 있나요?",
+      "category": "delivery",
+      "intent": "설치 서비스 포함 여부"
+    },
+    {
+      "question": "교환 절차는 어떻게 진행되나요? 시간은 얼마나 걸리나요?",
+      "category": "delivery",
+      "intent": "교환 진행 방법 및 소요 시간"
+    },
+    {
+      "question": "고객센터에 전화하면 응답이 빠른가요?",
+      "category": "service",
+      "intent": "고객센터 응답 속도 확인"
+    },
+    {
+      "question": "문의할 내용이 있을 때 가장 효율적인 채널은 무엇인가요?",
+      "category": "service",
+      "intent": "문의 채널 안내"
+    },
+    {
+      "question": "이용 약관에서 주의해야 할 주요 조항은 무엇인가요?",
+      "category": "service",
+      "intent": "주요 약관 안내"
+    },
+    {
+      "question": "개인정보 보호 정책을 쉽게 확인할 수 있는 방법이 있나요?",
+      "category": "service",
+      "intent": "개인정보 보호 정책 확인 방법"
+    },
+    {
+      "question": "실시간 채팅 상담을 이용하려면 어떻게 해야 하나요?",
+      "category": "service",
+      "intent": "실시간 상담 이용 방법"
+    },
+    {
+      "question": "낯선 브랜드 중 가성비 좋은 제품을 찾아 주세요.",
+      "category": "brand",
+      "intent": "새로운 가성비 브랜드 탐색"
+    },
+    {
+      "question": "최근에 출시된 신제품 중 인플루언서가 추천한 아이템이 있나요?",
+      "category": "brand",
+      "intent": "신제품 및 인플루언서 추천 확인"
+    },
+    {
+      "question": "에디터가 선정한 이번 주 베스트 상품 리스트를 볼 수 있을까요?",
+      "category": "brand",
+      "intent": "에디터 선정 상품 확인"
+    },
+    {
+      "question": "알려지지 않은 작은 브랜드 중 인기 있는 제품이 있나요?",
+      "category": "brand",
+      "intent": "소규모 브랜드 인기 제품 탐색"
+    },
+    {
+      "question": "신규 브랜드가 진행 중인 시식·체험 이벤트가 있나요?",
+      "category": "brand",
+      "intent": "신규 브랜드 체험 이벤트 확인"
+    }
+  ]
+}

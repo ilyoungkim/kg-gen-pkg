@@ -9,7 +9,7 @@ import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Sequence
 from urllib.parse import urlparse
 
 import nltk
@@ -21,6 +21,7 @@ from kngraph.config import (
     DEFAULT_CHUNK_SIZE,
     OUTPUT_FILE_LICENSE,
     OUTPUT_GENERATOR_NAME,
+    SOURCE_HTML_LIMIT,
     SOURCE_TEXT_LIMIT,
     load_config_files,
     resolve_model_settings,
@@ -86,6 +87,34 @@ def build_visualization_path(output_path: Path, visualization_path: str | None) 
 
 def resolve_target_url(args) -> str | None:
     return args.url or os.getenv('TARGET_URL')
+
+
+def build_browser_options(args) -> dict[str, Any] | None:
+    """Build the browser fetch options, or None when HTTP mode is used.
+
+    Browser mode is opt-in via ``--browser`` (or the ``KG_BROWSER`` env var)
+    because it launches a real Chrome instance.
+    """
+    enabled = bool(getattr(args, 'browser', False)) or _env_flag('KG_BROWSER')
+    if not enabled:
+        return None
+
+    options: dict[str, Any] = {
+        'headless': bool(getattr(args, 'browser_headless', False)),
+        'chrome_path': getattr(args, 'chrome_path', None),
+        'cdp_url': getattr(args, 'cdp_url', None),
+        'profile_dir': getattr(args, 'profile_dir', None) or '.browser-profile',
+    }
+    if options['chrome_path'] is None:
+        options['chrome_path'] = os.getenv('KG_CHROME_PATH') or None
+    if options['cdp_url'] is None:
+        options['cdp_url'] = os.getenv('KG_CDP_URL') or None
+    return options
+
+
+def _env_flag(name: str) -> bool:
+    value = os.getenv(name, '')
+    return value.strip().lower() in {'1', 'true', 'yes', 'on'}
 
 
 def build_output_path(target_url: str, output_path: str | None) -> Path:
@@ -223,6 +252,10 @@ def normalize_source_documents(page_documents: list[dict[str, str]]) -> list[dic
         }
         if crawl_source:
             normalized_document['crawl_source'] = crawl_source
+        page_html = str(page_document.get('html', '')).strip()
+        if page_html:
+            # Keep the raw markup for the SEO / structured-data audit.
+            normalized_document['html'] = page_html[:SOURCE_HTML_LIMIT]
         normalized_documents.append(normalized_document)
     return normalized_documents
 
@@ -425,6 +458,10 @@ def load_or_generate_graph(args, config: dict):
 
     from kngraph import KNGraph
 
+    browser_options = build_browser_options(args)
+    if browser_options:
+        log_progress(2, 6, '브라우저 모드로 수집하는 중 (Chrome + CDP)')
+
     if output_path.exists() and not args.renew:
         log_progress(2, 6, '기존 graph JSON 캐시를 재사용하는 중')
         graph = KNGraph.from_file(str(output_path))
@@ -438,6 +475,7 @@ def load_or_generate_graph(args, config: dict):
                     lambda message, payload=None: log_verbose(args.verbose, message, payload)
                 ),
                 page_limit=args.page,
+                browser_options=build_browser_options(args),
             )
             source_documents = save_source_documents(source_cache_path, page_documents)
         print({'loaded_from': str(output_path)})
@@ -451,6 +489,7 @@ def load_or_generate_graph(args, config: dict):
             lambda message, payload=None: log_verbose(args.verbose, message, payload)
         ),
         page_limit=args.page,
+        browser_options=build_browser_options(args),
     )
     log_collected_pages(page_documents)
     source_documents = save_source_documents(source_cache_path, page_documents)
@@ -512,6 +551,43 @@ def load_or_generate_graph(args, config: dict):
 
     return KNGraph, graph, source_documents
 
+def load_qa_report(
+    output_path: Path,
+    extra_paths: Sequence[str | Path] | None = None,
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """Load a saved probe report so the Report tab can show Q&A results.
+
+    Looks next to the graph output first, then in the well-known probe
+    output directory, then at any explicitly supplied path.
+    """
+    candidates: list[Path] = [output_path.with_name('qa_probe_report.json')]
+    if extra_paths:
+        candidates.extend(Path(item) for item in extra_paths)
+    candidates.append(Path('outputs/probe/qa_probe_report.json'))
+
+    report_path = next((item for item in candidates if item.exists()), None)
+    if report_path is None:
+        return [], {}
+    try:
+        with report_path.open('r', encoding='utf-8') as report_file:
+            payload = json.load(report_file)
+    except (OSError, json.JSONDecodeError):
+        return [], {}
+    if not isinstance(payload, dict):
+        return [], {}
+    results = payload.get('results') or []
+    pairs = [
+        {
+            'question': str(item.get('question', '')),
+            'answer': str(item.get('groundedAnswer', '') or item.get('answer', '')),
+            'category': str(item.get('category', '')),
+        }
+        for item in results
+        if isinstance(item, dict)
+    ]
+    return pairs, payload
+
+
 def analyze(
     url: str | None = None,
     model: str | None = None,
@@ -524,6 +600,12 @@ def analyze(
     open_browser: bool = False,
     config_path: str | Path | None = None,
     work_dir: str | Path | None = None,
+    browser: bool = False,
+    browser_headless: bool = False,
+    chrome_path: str | None = None,
+    cdp_url: str | None = None,
+    profile_dir: str | None = None,
+    probe_report: str | Path | None = None,
 ) -> dict[str, Any]:
     """Run the full pipeline and return paths + summary."""
     load_config_files(search_dir=work_dir)
@@ -547,6 +629,9 @@ def analyze(
         'Args', (), {
             'url': target_url, 'model': model, 'locally_ollama': locally_ollama,
             'renew': renew, 'output': output, 'page': page, 'verbose': verbose,
+            'browser': browser, 'browser_headless': browser_headless,
+            'chrome_path': chrome_path, 'cdp_url': cdp_url,
+            'profile_dir': profile_dir,
         },
     )()
     KNGraph, graph, source_documents = load_or_generate_graph(args, config)
@@ -559,6 +644,10 @@ def analyze(
         file_type='html', target_url=target_url, build_info=build_info,
     )
     visualization_path = build_visualization_path(output_path, html)
+    qa_pairs, qa_report = load_qa_report(
+        output_path,
+        extra_paths=[probe_report] if probe_report else None,
+    )
 
     save_graph_with_metadata(output_path, graph, graph_output_metadata)
     log_progress(6, 6, 'HTML 시각화를 생성하는 중')
@@ -571,6 +660,16 @@ def analyze(
         qa_runtime_config=qa_runtime_config,
         build_info=build_info,
         output_metadata=html_output_metadata,
+        source_html_documents=[
+            {
+                'url': document.get('url', ''),
+                'html': document.get('html', ''),
+            }
+            for document in source_documents
+            if document.get('html')
+        ],
+        qa_pairs=qa_pairs,
+        qa_report=qa_report,
     )
     return {
         'output': str(output_path),

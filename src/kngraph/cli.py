@@ -4,6 +4,7 @@ Command line interface for kngraph.
 """
 
 import argparse
+import json
 import subprocess
 import sys
 import os
@@ -134,6 +135,99 @@ def main():
     analyze_parser.add_argument("--verbose", "-v", action="store_true", help="Verbose logs")
     analyze_parser.add_argument("--config", default=None, help="config.json path (extraction guideline)")
     analyze_parser.add_argument("--no-browser", action="store_true", help="Do not open browser after generation")
+    analyze_parser.add_argument(
+        "--browser", action="store_true",
+        help="Crawl with a real Chrome over CDP instead of plain HTTP",
+    )
+    analyze_parser.add_argument(
+        "--browser-headless", dest="browser_headless", action="store_true",
+        help="Run the crawling browser in headless mode",
+    )
+    analyze_parser.add_argument("--chrome-path", default=None, help="Chrome executable path")
+    analyze_parser.add_argument("--cdp-url", default=None, help="Connect to an existing Chrome via CDP URL")
+    analyze_parser.add_argument("--profile-dir", default=None, help="Browser profile directory (default: .browser-profile)")
+
+    # Batch subcommand: analyze every URL listed in urls.yaml
+    batch_parser = subparsers.add_parser(
+        "batch", help="Analyze every URL in urls.yaml (batch run)"
+    )
+    batch_parser.add_argument("--urls", default="urls.yaml", help="URL case list (YAML)")
+    batch_parser.add_argument("--output-root", default="outputs/batch", help="Batch output root directory")
+    batch_parser.add_argument("--model", "-m", default=None, help="LLM model (or KG_MODEL env)")
+    batch_parser.add_argument("--config", default=None, help="config.json path (extraction guideline)")
+    batch_parser.add_argument("--page", type=int, default=None, help="Max pages to collect per URL")
+    batch_parser.add_argument("--host", dest="only_host", default=None, help="Only run URLs of this host")
+    batch_parser.add_argument(
+        "--case", dest="case_ids", type=int, action="append", default=None,
+        help="Only run this case_id (repeatable)",
+    )
+    batch_parser.add_argument("--renew", action="store_true", help="Ignore cached output and re-crawl")
+    batch_parser.add_argument("--verbose", "-v", action="store_true", help="Verbose logs")
+    batch_parser.add_argument("--dry-run", action="store_true", help="List planned work without running")
+    batch_parser.add_argument("--no-report", action="store_true", help="Do not write the batch report")
+    batch_parser.add_argument(
+        "--browser", action="store_true",
+        help="Crawl with a real Chrome over CDP instead of plain HTTP",
+    )
+    batch_parser.add_argument(
+        "--browser-headless", dest="browser_headless", action="store_true",
+        help="Run the crawling browser in headless mode",
+    )
+    batch_parser.add_argument("--chrome-path", default=None, help="Chrome executable path")
+    batch_parser.add_argument("--cdp-url", default=None, help="Connect to an existing Chrome via CDP URL")
+    batch_parser.add_argument("--profile-dir", default=None, help="Browser profile directory (default: .browser-profile)")
+
+    # Probe subcommand: answer-engine visibility probe for SSG7 membership
+    probe_parser = subparsers.add_parser(
+        "probe", help="Run the answer-engine visibility probe (brand / discovery Q&A suites)"
+    )
+    probe_parser.add_argument(
+        "--sources", nargs="+", default=["outputs/www.ssg.com/sources.json"],
+        help="sources.json file(s) produced by previous runs (repeatable)",
+    )
+    probe_parser.add_argument(
+        "--suite", dest="suites", action="append", default=None,
+        help="Suite to run: brand | discovery (repeatable, default both)",
+    )
+    probe_parser.add_argument("--brand-count", type=int, default=20, help="Brand question count")
+    probe_parser.add_argument("--discovery-count", type=int, default=50, help="Discovery question count")
+    probe_parser.add_argument(
+        "--model", "-m", default=None,
+        help="LLM model (default: openai/gpt-oss-120b via OpenRouter)",
+    )
+    probe_parser.add_argument("--output", default="outputs/probe", help="Report output directory")
+    probe_parser.add_argument("--workers", type=int, default=4, help="Parallel question workers")
+    probe_parser.add_argument("--max-chunks", type=int, default=40, help="Reference chunks to build")
+
+    # Regenerate subcommand: rebuild outputs from already collected sources
+    regenerate_parser = subparsers.add_parser(
+        "regenerate", help="Rebuild graph/HTML from already collected sources.json (no re-crawl)"
+    )
+    regenerate_parser.add_argument(
+        "--sources", nargs="+", default=None,
+        help="sources.json file(s) to rebuild from (default: search --source-root)",
+    )
+    regenerate_parser.add_argument(
+        "--source-root", default="outputs",
+        help="Directory to search for sources.json files (default: outputs)",
+    )
+    regenerate_parser.add_argument(
+        "--output", "-o", default="outputs/regenerated/graph.json",
+        help="graph JSON output path",
+    )
+    regenerate_parser.add_argument("--html", default=None, help="HTML output path")
+    regenerate_parser.add_argument("--model", "-m", default=None, help="LLM model (or KG_MODEL env)")
+    regenerate_parser.add_argument("--config", default=None, help="config.json path (extraction guideline)")
+    regenerate_parser.add_argument(
+        "--reuse-graph", action="store_true",
+        help="Skip the LLM pass and reuse the existing graph JSON (dashboard only)",
+    )
+    regenerate_parser.add_argument("--verbose", "-v", action="store_true", help="Verbose logs")
+    regenerate_parser.add_argument("--no-browser", action="store_true", help="Do not open browser after generation")
+    regenerate_parser.add_argument(
+        "--probe-report", default=None,
+        help="qa_probe_report.json to embed in the report tab (default: outputs/probe/qa_probe_report.json)",
+    )
 
     # Configure subcommand: store API keys and defaults
     configure_parser = subparsers.add_parser(
@@ -197,8 +291,126 @@ def main():
                 verbose=args.verbose,
                 open_browser=not args.no_browser,
                 config_path=args.config,
+                browser=args.browser,
+                browser_headless=args.browser_headless,
+                chrome_path=args.chrome_path,
+                cdp_url=args.cdp_url,
+                profile_dir=args.profile_dir,
             )
         except UserFacingError as exc:
+            print(str(exc), file=sys.stderr)
+            return 1
+        print(result)
+        return 0
+
+    if args.command == "batch":
+        from kngraph.batch import run_batch, write_batch_report
+        from kngraph.config import load_config_files
+
+        load_config_files()
+        if args.model:
+            os.environ["KG_MODEL"] = args.model
+        try:
+            summary = run_batch(
+                urls_path=args.urls,
+                output_root=args.output_root,
+                model=args.model,
+                page=args.page,
+                renew=args.renew,
+                verbose=args.verbose,
+                config_path=args.config,
+                only_host=args.only_host,
+                only_case_ids=args.case_ids,
+                dry_run=args.dry_run,
+                browser=args.browser,
+                browser_headless=args.browser_headless,
+                chrome_path=args.chrome_path,
+                cdp_url=args.cdp_url,
+                profile_dir=args.profile_dir,
+            )
+        except ValueError as exc:
+            print(str(exc), file=sys.stderr)
+            return 1
+
+        if not args.no_report:
+            report_paths = write_batch_report(summary, args.output_root)
+            summary["report"] = report_paths
+        print(summary)
+        return 0 if summary.get("failed", 0) == 0 else 1
+
+    if args.command == "probe":
+        from kngraph.qa_probe import run_probe, write_report
+
+        source_documents: list[dict] = []
+        for raw_path in args.sources:
+            sources_path = Path(raw_path)
+            if not sources_path.exists():
+                print(f"소스 파일을 찾을 수 없습니다: {sources_path}", file=sys.stderr)
+                return 1
+            documents = json.loads(sources_path.read_text(encoding="utf-8"))
+            if not isinstance(documents, list):
+                print(f"sources.json 형식이 올바르지 않습니다: {sources_path}", file=sys.stderr)
+                return 1
+            source_documents.extend(documents)
+
+        seen_urls: set[str] = set()
+        deduplicated_documents: list[dict] = []
+        for document in source_documents:
+            url = str(document.get("url", ""))
+            if url in seen_urls:
+                continue
+            seen_urls.add(url)
+            deduplicated_documents.append(document)
+        source_documents = deduplicated_documents
+
+        suites = tuple(args.suites) if args.suites else ("brand", "discovery")
+        try:
+            report = run_probe(
+                source_documents=source_documents,
+                suites=suites,
+                brand_count=args.brand_count,
+                discovery_count=args.discovery_count,
+                model=args.model,
+                workers=args.workers,
+                max_chunks=args.max_chunks,
+            )
+        except RuntimeError as exc:
+            print(str(exc), file=sys.stderr)
+            return 1
+
+        report_paths = write_report(report, args.output)
+        report["report"] = report_paths
+        print(json.dumps(report.get("summary", {}), ensure_ascii=False, indent=2))
+        print(report_paths)
+        return 0
+
+    if args.command == "regenerate":
+        from kngraph.regenerate import collect_source_files, regenerate
+
+        source_paths = list(args.sources) if args.sources else []
+        if not source_paths:
+            source_paths = [str(path) for path in collect_source_files(args.source_root)]
+        if not source_paths:
+            print(
+                f"sources.json 을 찾지 못했습니다: {args.source_root}",
+                file=sys.stderr,
+            )
+            return 1
+
+        print({'source_files': len(source_paths)})
+        try:
+            result = regenerate(
+                sources=source_paths,
+                output=args.output,
+                html=args.html,
+                model=args.model,
+                config_path=args.config,
+                reuse_graph=args.reuse_graph,
+                verbose=args.verbose,
+                open_browser=not args.no_browser,
+                probe_report=args.probe_report,
+            )
+        except ValueError as exc:
             print(str(exc), file=sys.stderr)
             return 1
         print(result)

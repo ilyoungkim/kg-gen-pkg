@@ -499,11 +499,193 @@
             color: #94a3b8;
         }
 
+        .qa-mode-switch {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+            padding: 0 24px;
+        }
+
+        .qa-mode-btn {
+            border: 1px solid #cbd5e1;
+            background: #ffffff;
+            color: #475569;
+            border-radius: 999px;
+            padding: 8px 16px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+        }
+
+        .qa-mode-btn:hover {
+            border-color: #94a3b8;
+        }
+
+        .qa-mode-btn.active {
+            background: #2563eb;
+            border-color: #2563eb;
+            color: #ffffff;
+        }
+
+        .probe-summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .probe-summary-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 14px 16px;
+            background: #f8fafc;
+        }
+
+        .probe-summary-card .probe-summary-label {
+            font-size: 0.75rem;
+            color: #64748b;
+            margin-bottom: 6px;
+            line-height: 1.4;
+        }
+
+        .probe-summary-card .probe-summary-value {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #0f172a;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .probe-suite-block {
+            margin-bottom: 28px;
+        }
+
+        .probe-suite-head {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+
+        .probe-suite-head h3 {
+            margin: 0;
+            font-size: 1rem;
+        }
+
+        .probe-suite-desc {
+            font-size: 0.82rem;
+            color: #64748b;
+            margin: 0 0 12px;
+            line-height: 1.5;
+        }
+
+        .probe-question {
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin-bottom: 10px;
+            background: #ffffff;
+        }
+
+        .probe-question-head {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 8px;
+        }
+
+        .probe-question-index {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: #64748b;
+            background: #f1f5f9;
+            border-radius: 6px;
+            padding: 2px 7px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .probe-question-category {
+            font-size: 0.72rem;
+            color: #1d4ed8;
+            background: #eff6ff;
+            border-radius: 6px;
+            padding: 2px 7px;
+        }
+
+        .probe-flag {
+            font-size: 0.72rem;
+            border-radius: 6px;
+            padding: 2px 7px;
+            font-weight: 600;
+        }
+
+        .probe-flag.on {
+            color: #047857;
+            background: #ecfdf5;
+        }
+
+        .probe-flag.off {
+            color: #b45309;
+            background: #fffbeb;
+        }
+
+        .probe-question-text {
+            font-weight: 600;
+            color: #0f172a;
+            margin: 0 0 10px;
+            line-height: 1.5;
+        }
+
+        .probe-answer-pair {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 10px;
+        }
+
+        .probe-answer {
+            border-radius: 10px;
+            padding: 10px 12px;
+            font-size: 0.85rem;
+            line-height: 1.55;
+            border: 1px solid #e2e8f0;
+        }
+
+        .probe-answer.closed {
+            background: #f8fafc;
+        }
+
+        .probe-answer.grounded {
+            background: #f0fdf4;
+            border-color: #bbf7d0;
+        }
+
+        .probe-answer-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: #64748b;
+            margin-bottom: 5px;
+        }
+
+        .probe-answer.grounded .probe-answer-label {
+            color: #047857;
+        }
+
         .qa-panel {
             display: grid;
             grid-template-columns: minmax(320px, 420px) minmax(0, 1fr);
             gap: 16px;
             height: calc(100vh - 90px);
+        }
+
+        /* `display: grid` above would otherwise defeat the hidden attribute. */
+        .qa-panel[hidden] {
+            display: none !important;
         }
 
         .glossary-panel {
@@ -1129,7 +1311,63 @@
                 </div>
             </section>
             <section id="qa" class="tab-panel">
-                <div class="qa-panel">
+                <div class="qa-mode-switch" role="tablist" aria-label="Q&A 모드 | Q&A mode">
+                    <button class="qa-mode-btn active" type="button" data-qa-mode="probe" role="tab" aria-selected="true">
+                        가시성 프로브 | Visibility Probe
+                    </button>
+                    <button class="qa-mode-btn" type="button" data-qa-mode="url" role="tab" aria-selected="false">
+                        URL 기반 Q&A | URL-Centered
+                    </button>
+                </div>
+                <div class="qa-panel" id="qaModeProbe" data-qa-mode-panel="probe">
+                    <aside class="qa-sidebar">
+                        <h2>가시성 프로브 | Visibility Probe</h2>
+                        <p class="meta" style="margin: 0 0 12px; line-height: 1.5;">
+                            ssg7club·쓱7클럽·쓱세븐클럽 멤버십이 Answer Engine에 어떻게 노출되는지 측정합니다.
+                            각 질문은 <strong>폐북(학습)</strong>과 <strong>그라운디드(인용)</strong>로 두 번 호출해 비교합니다.
+                        </p>
+                        <div class="qa-controls">
+                            <div class="action-row" style="margin-top: 0; align-items: center;" role="radiogroup" aria-label="프로브 프로바이더 | Probe provider">
+                                <span class="meta" style="white-space: nowrap;">프로바이더 | Provider</span>
+                                <label class="meta" style="display: inline-flex; align-items: center; gap: 4px; cursor: pointer;">
+                                    <input type="radio" name="probeProvider" value="openrouter" checked /> OpenRouter
+                                </label>
+                                <label class="meta" style="display: inline-flex; align-items: center; gap: 4px; cursor: pointer;">
+                                    <input type="radio" name="probeProvider" value="openai" /> OpenAI
+                                </label>
+                            </div>
+                            <input id="probeApiKeyInput" class="qa-input" type="password" placeholder="OpenRouter API 키 입력 | Enter OpenRouter API key" autocomplete="off" />
+                            <div class="action-row" style="margin-top: 0; align-items: center;">
+                                <label for="probeModelInput" class="meta" style="white-space: nowrap;">모델 | Model</label>
+                                <input id="probeModelInput" class="qa-input" type="text" value="openai/gpt-oss-120b" placeholder="openai/gpt-oss-120b" />
+                            </div>
+                            <div class="action-row" style="margin-top: 0; align-items: center;">
+                                <label for="probeBrandCountInput" class="meta" style="white-space: nowrap;">브랜드 질문 | Brand</label>
+                                <input id="probeBrandCountInput" class="qa-input" type="number" min="1" max="30" step="1" value="20" style="max-width: 96px;" />
+                                <label for="probeDiscoveryCountInput" class="meta" style="white-space: nowrap;">발견 질문 | Discovery</label>
+                                <input id="probeDiscoveryCountInput" class="qa-input" type="number" min="1" max="60" step="1" value="50" style="max-width: 96px;" />
+                            </div>
+                            <div class="action-row" style="margin-top: 0;">
+                                <button id="runProbeButton" class="action-button" type="button">프로브 실행 | Run Probe</button>
+                            </div>
+                            <div id="probeStatus" class="qa-status">
+                                <strong>준비됨 | Ready</strong><br />
+                                - 브랜드 직접 질문(기본 20개)과 비브랜드 발견 질문(기본 50개)을 생성해 두 모드로 비교합니다.
+                                <br />- 질문은 실행 시 LLM이 만들고, 결과는 탭을 닫아도 유지됩니다.
+                            </div>
+                        </div>
+                    </aside>
+                    <section class="qa-content">
+                        <h2>가시성 프로브 결과 | Visibility Probe Results</h2>
+                        <div id="probeResults" class="qa-empty">
+                            <strong>프로브 실행 | Run Probe</strong> 버튼을 눌러 20+50 질문 검사를 시작하세요.
+                            <br />- <strong>브랜드 직접 질문</strong>: ssg7club·쓱7클럽·쓱세븐클럽을 언급해 학습 정보와 인용 정보를 분리 확인
+                            <br />- <strong>비브랜드 발견 질문</strong>: 상품·구매·직업·시간·멤버십 등으로 무기명 노출 측정
+                            <br />- 각 질문은 폐북(컨텍스트 없음)·그라운디드(수집 원문 제공) 답변을 함께 보여줍니다.
+                        </div>
+                    </section>
+                </div>
+                <div class="qa-panel" id="qaModeUrl" data-qa-mode-panel="url" hidden>
                     <aside class="qa-sidebar">
                         <h2>URL 기반 Q&A | URL-Centered Q&A</h2>
                         <div class="qa-controls">
@@ -1232,9 +1470,7 @@
         </main>
     </div>
     <script src="https://d3js.org/d3.v7.min.js"></script>
-    <script id="viz-data" type="application/json">
-<!--DATA-->
-    </script>
+    <script id="viz-data" type="application/json"><!--DATA-->    </script>
     <script>
         (function () {
             console.log('[iframe] Script starting - mobile check:', window.innerWidth <= 768);
@@ -1514,6 +1750,708 @@
                 openrouter: 'https://openrouter.ai/api/v1/responses',
             };
             const QA_SOURCE_TEXT_LIMIT = 6000;
+
+            // ===== Visibility Probe (brand 20 / discovery 50) =====
+            const PROBE_DIRECT_API_URLS = {
+                openai: 'https://api.openai.com/v1/responses',
+                openrouter: 'https://openrouter.ai/api/v1/responses',
+            };
+            const PROBE_BRAND_CATEGORIES = [
+                ['fact', '멤버십 등급·구성·가입비'],
+                ['benefit', '쿠폰·적립·사은품 혜택'],
+                ['usage', '혜택 받는 방법·절차'],
+                ['policy', '해지·만료·소멸 정책'],
+                ['comparison', '다른 멤버십과의 비교'],
+                ['situation', '상황별 적합성'],
+                ['limitation', '단점·제외 대상'],
+                ['authority', '운영사·브랜드 규모'],
+            ];
+            const PROBE_DISCOVERY_CATEGORIES = [
+                ['product', '상품', '가성비 좋은 상품, 특가 상품, 새로 나온 상품'],
+                ['purchase', '구매', '무료배송, 한 번에 결제, 장바구니, 결제 수단'],
+                ['occupation', '직업', '직장인, 학생, 사업자 대상 할인'],
+                ['time', '시간', '주말 장보기, 마감 전 구매, 평일과 주말 차이'],
+                ['membership', '멤버십', '멤버십 추천, 등급 우대, 가입과 해지, 적립'],
+                ['price', '가격·절약', '구독료, 할인율, 적립률, 비용 대비 이득'],
+                ['event', '이벤트·쿠폰', '이벤트 기간, 쿠폰 다운로드, 경품, 한정판'],
+                ['delivery', '배송·교환', '배송 기간, 새벽배송, 반품과 교환, 설치'],
+                ['service', '고객지원', '고객센터, 문의, 약관, 개인정보, 상담'],
+                ['brand', '브랜드 발견', '낯선 브랜드 발견, 신제품, 에디터 선정 상품'],
+            ];
+            const PROBE_BRAND_REGEX = /쓱\s*7\s*클럽|쓱\s*세븐\s*클럽|쓱세븐|ssg\s*7\s*클럽|ssg\s*7\s*club|ssg7club|쓱\s*7\b/i;
+            const PROBE_PREMIUM_REGEX = /쓱\s*세븐|쓱세븐/i;
+            const PROBE_REFERENCE_LIMIT = 8;
+            const PROBE_SOURCE_TEXT_LIMIT = 1200;
+            const PROBE_CHUNK_LIMIT = 40;
+            const PROBE_REQUEST_TIMEOUT_MS = 90000;
+
+            function probeContainsBrand(value) {
+                return PROBE_BRAND_REGEX.test(String(value || ''));
+            }
+
+            function getProbeProvider() {
+                const checked = document.querySelector('input[name="probeProvider"]:checked');
+                return checked?.value === 'openai' ? 'openai' : 'openrouter';
+            }
+
+            function getProbeApiKeyStorageKey(provider) {
+                return provider === 'openrouter' ? 'kgProbeApiKeyOpenRouter' : 'kgProbeApiKey';
+            }
+
+            function getProbeApiKey() {
+                const provider = getProbeProvider();
+                const input = document.getElementById('probeApiKeyInput');
+                const typed = (input?.value || '').trim();
+                if (typed) {
+                    return typed;
+                }
+                try {
+                    return (localStorage.getItem(getProbeApiKeyStorageKey(provider)) || '').trim();
+                } catch (error) {
+                    return '';
+                }
+            }
+
+            function getProbeModel() {
+                const input = document.getElementById('probeModelInput');
+                const typed = (input?.value || '').trim();
+                if (typed) {
+                    return typed;
+                }
+                return getProbeProvider() === 'openrouter' ? 'openai/gpt-oss-120b' : 'gpt-5.6-luna';
+            }
+
+            function getProbeCount(inputId, fallback) {
+                const input = document.getElementById(inputId);
+                const value = Number.parseInt(input?.value || '', 10);
+                if (!Number.isFinite(value) || value < 1) {
+                    return fallback;
+                }
+                return Math.min(input?.max ? Number(input.max) : fallback, value);
+            }
+
+            function setProbeStatus(message, detail = '') {
+                const status = document.getElementById('probeStatus');
+                if (!status) {
+                    return;
+                }
+                status.innerHTML = `<strong>${escapeHtml(message)}</strong>${detail ? `<br />${escapeHtml(detail)}` : ''}`;
+            }
+
+            function buildProbeContextPack() {
+                const docs = Array.isArray(vizData.sourceDocuments) ? vizData.sourceDocuments : [];
+                const chunks = [];
+                docs.forEach(doc => {
+                    const url = String(doc.url || '');
+                    const text = String(doc.text || '');
+                    if (!url || !text) {
+                        return;
+                    }
+                    for (let start = 0; start < text.length; start += PROBE_SOURCE_TEXT_LIMIT) {
+                        const body = text.slice(start, start + PROBE_SOURCE_TEXT_LIMIT).trim();
+                        if (body.length < 80) {
+                            continue;
+                        }
+                        chunks.push({ url, text: body, brandRelevant: probeContainsBrand(body) });
+                    }
+                });
+                const brandChunks = chunks.filter(chunk => chunk.brandRelevant);
+                const otherChunks = chunks.filter(chunk => !chunk.brandRelevant);
+                const brandQuota = Math.min(brandChunks.length, Math.max(1, Math.floor(PROBE_CHUNK_LIMIT * 0.75)));
+                return [...brandChunks.slice(0, brandQuota), ...otherChunks.slice(0, PROBE_CHUNK_LIMIT - brandQuota)]
+                    .slice(0, PROBE_CHUNK_LIMIT);
+            }
+
+            function probeTokenize(value) {
+                return new Set(
+                    (String(value || '').toLowerCase().match(/[0-9A-Za-z가-힣]+/g) || [])
+                        .filter(token => token.length > 1)
+                );
+            }
+
+            function selectProbeReferences(question, chunks) {
+                if (!chunks.length) {
+                    return [];
+                }
+                const questionTokens = probeTokenize(question);
+                const scored = chunks.map((chunk, index) => {
+                    const chunkTokens = probeTokenize(chunk.text);
+                    let overlap = 0;
+                    questionTokens.forEach(token => {
+                        if (chunkTokens.has(token)) {
+                            overlap += 1;
+                        }
+                    });
+                    return { chunk, index, overlap };
+                });
+                scored.sort((a, b) => (b.overlap - a.overlap) || (a.index - b.index));
+                return scored
+                    .slice(0, PROBE_REFERENCE_LIMIT)
+                    .sort((a, b) => a.index - b.index)
+                    .map(item => item.chunk);
+            }
+
+            function formatProbeReferences(references) {
+                return references
+                    .map((reference, index) => `[${index + 1}] (source: ${reference.url})\n${reference.text}`)
+                    .join('\n\n');
+            }
+
+            const PROBE_ANSWER_SCHEMA = {
+                type: 'object',
+                properties: {
+                    answer: { type: 'string' },
+                    cited: { type: 'boolean' },
+                    citations: { type: 'array', items: { type: 'integer' } },
+                },
+                required: ['answer', 'cited', 'citations'],
+                additionalProperties: false,
+            };
+
+            const PROBE_QUESTION_SCHEMA = {
+                type: 'object',
+                properties: {
+                    questions: {
+                        type: 'array',
+                        items: {
+                            type: 'object',
+                            properties: {
+                                question: { type: 'string' },
+                                category: { type: 'string' },
+                                intent: { type: 'string' },
+                            },
+                            required: ['question', 'category', 'intent'],
+                            additionalProperties: false,
+                        },
+                    },
+                },
+                required: ['questions'],
+                additionalProperties: false,
+            };
+
+            async function probeCallStructured({ systemPrompt, userPrompt, schema, schemaName, model, apiKey }) {
+                const provider = getProbeProvider();
+                // Bound the request: a stalled connection would otherwise hang
+                // the whole probe run in the browser.
+                const controller = new AbortController();
+                const timeoutHandle = setTimeout(() => controller.abort(), PROBE_REQUEST_TIMEOUT_MS);
+                let response;
+                try {
+                    response = await fetch(PROBE_DIRECT_API_URLS[provider], {
+                    method: 'POST',
+                    signal: controller.signal,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${apiKey}`,
+                        ...(provider === 'openrouter'
+                            ? { 'HTTP-Referer': location.href, 'X-Title': 'kngraph-probe' }
+                            : {}),
+                    },
+                    body: JSON.stringify({
+                        model,
+                        input: [
+                            { role: 'system', content: systemPrompt },
+                            { role: 'user', content: userPrompt },
+                        ],
+                        text: {
+                            format: { type: 'json_schema', name: schemaName, schema, strict: true },
+                        },
+                    }),
+                    });
+                } catch (error) {
+                    clearTimeout(timeoutHandle);
+                    if (error && error.name === 'AbortError') {
+                        throw new Error('요청 시간이 초과되었습니다.');
+                    }
+                    throw error;
+                }
+                clearTimeout(timeoutHandle);
+                const result = await response.json().catch(() => ({}));
+                if (!response.ok) {
+                    throw new Error(result?.error?.message || `프로브 요청 실패 (HTTP ${response.status})`);
+                }
+                return JSON.parse(extractQaResponseText(result));
+            }
+
+            async function generateProbeQuestions(suite, count, model, apiKey) {
+                if (suite === 'brand') {
+                    const perCategory = Math.max(1, Math.floor(count / PROBE_BRAND_CATEGORIES.length));
+                    const categoryList = PROBE_BRAND_CATEGORIES
+                        .map(([id, label]) => `- ${id}: ${label}`)
+                        .join('\n');
+                    const payload = await probeCallStructured({
+                        model,
+                        apiKey,
+                        schema: PROBE_QUESTION_SCHEMA,
+                        schemaName: 'probe_brand_questions',
+                        systemPrompt: [
+                            'You are an AEO/GEO (Answer Engine Optimization) strategist writing evaluation',
+                            'questions for the SSG7 membership. Brand surface forms: ssg7club,쓱7클럽,쓱세븐클럽.',
+                            'You write questions a real user would type into an AI assistant.',
+                            'You never invent facts about the brand; you only write the questions.',
+                        ].join(' '),
+                        userPrompt: [
+                            `Write exactly ${count} evaluation questions about the SSG7 membership.`,
+                            '',
+                            'Brand surface forms to use in the questions (mix them across questions):',
+                            '- ssg7club',
+                            '- 쓱7클럽',
+                            '- 쓱세븐클럽',
+                            '',
+                            'Spread the questions across these categories (about ' + perCategory + ' each):',
+                            categoryList,
+                            '',
+                            'Rules:',
+                            '- The brand MUST be named explicitly in every question.',
+                            '- Vary phrasing: some short keyword-style, some full sentences.',
+                            '- Do NOT include the answer.',
+                            '- "intent" states in one short sentence what the question checks.',
+                            '- "category" must be one of: ' + PROBE_BRAND_CATEGORIES.map(item => item[0]).join(', '),
+                        ].join('\n'),
+                    });
+                    return (payload.questions || [])
+                        .map(item => ({
+                            question: String(item.question || '').trim(),
+                            category: String(item.category || '').trim(),
+                            intent: String(item.intent || '').trim(),
+                        }))
+                        .filter(item => item.question && probeContainsBrand(item.question))
+                        .slice(0, count);
+                }
+
+                const categoryList = PROBE_DISCOVERY_CATEGORIES
+                    .map(([id, label, hint]) => `- ${id} (${label}): ${hint}`)
+                    .join('\n');
+                const payload = await probeCallStructured({
+                    model,
+                    apiKey,
+                    schema: PROBE_QUESTION_SCHEMA,
+                    schemaName: 'probe_discovery_questions',
+                    systemPrompt: [
+                        'You are an AEO/GEO strategist writing evaluation questions that an AI answer',
+                        'engine should be able to answer by recommending a Korean shopping membership.',
+                        'You write natural user questions and never mention the brand being measured.',
+                    ].join(' '),
+                    userPrompt: [
+                        `Write exactly ${count} evaluation questions that a real Korean user would type`,
+                        'into an AI assistant while shopping.',
+                        '',
+                        'Spread the questions evenly across these categories:',
+                        categoryList,
+                        '',
+                        'Rules:',
+                        '- CRITICAL: never name the brand, product, or company being measured.',
+                        '- Questions must be brand-agnostic and ask about need, situation, or criteria.',
+                        '- Mix keyword-style short questions and full natural sentences.',
+                        '- Do NOT include the answer.',
+                        '- "category" must be one of: ' + PROBE_DISCOVERY_CATEGORIES.map(item => item[0]).join(', '),
+                        '- "intent" states in one short sentence what the question checks.',
+                    ].join('\n'),
+                });
+                return (payload.questions || [])
+                    .map(item => ({
+                        question: String(item.question || '').trim(),
+                        category: String(item.category || '').trim(),
+                        intent: String(item.intent || '').trim(),
+                    }))
+                    .filter(item => item.question && !probeContainsBrand(item.question))
+                    .slice(0, count);
+            }
+
+            async function answerProbeClosedBook(question, model, apiKey) {
+                const payload = await probeCallStructured({
+                    model,
+                    apiKey,
+                    schema: PROBE_ANSWER_SCHEMA,
+                    schemaName: 'probe_closed_book_answer',
+                    systemPrompt: [
+                        'You are a helpful AI assistant. Answer using your own general knowledge.',
+                        'Be concise and direct (2-4 sentences).',
+                    ].join(' '),
+                    userPrompt: [
+                        'Answer this question about online shopping memberships in Korean.',
+                        '',
+                        'Question:',
+                        question,
+                        '',
+                        'Answer directly. If you are not certain about specifics, say so plainly.',
+                        'Do not mention that you were given no context.',
+                    ].join('\n'),
+                });
+                const answer = String(payload.answer || '').trim();
+                if (isLeakedProbeAnswer(answer)) {
+                    return { answer: '', ok: false, error: '모델이 실제 답변을 반환하지 않았습니다.' };
+                }
+                return { answer, ok: Boolean(answer), error: null };
+            }
+
+            async function answerProbeGrounded(question, references, model, apiKey) {
+                if (!references.length) {
+                    return { answer: '', ok: false, error: '참조 문서가 없습니다.' };
+                }
+                const payload = await probeCallStructured({
+                    model,
+                    apiKey,
+                    schema: PROBE_ANSWER_SCHEMA,
+                    schemaName: 'probe_grounded_answer',
+                    systemPrompt: [
+                        'You are a helpful AI assistant that answers strictly from the provided',
+                        'reference documents. You cite the reference numbers you used.',
+                    ].join(' '),
+                    userPrompt: [
+                        'Answer the question in Korean using ONLY the reference documents below.',
+                        '',
+                        'Rules:',
+                        '- Reference documents are the source of truth. Do not invent details.',
+                        '- If a reference names a concrete brand or membership, name it explicitly.',
+                        '- End your answer with the reference numbers you relied on, like [1] [2].',
+                        '- If the references do not answer the question, say so briefly.',
+                        '- Be concise and direct (2-4 sentences) before the citations.',
+                        '',
+                        'Question:',
+                        question,
+                        '',
+                        'Reference documents:',
+                        formatProbeReferences(references),
+                    ].join('\n'),
+                });
+                const answer = String(payload.answer || '').trim();
+                if (isLeakedProbeAnswer(answer)) {
+                    return { answer: '', ok: false, error: '모델이 실제 답변을 반환하지 않았습니다.' };
+                }
+                return {
+                    answer,
+                    ok: Boolean(answer),
+                    error: null,
+                    cited: Boolean(payload.cited) || (payload.citations || []).length > 0,
+                    citations: payload.citations || [],
+                };
+            }
+
+            const PROBE_LEAK_MARKERS = ['analysis', 'assistant', "i'm sorry", 'i cannot', 'as an ai', '```'];
+
+            function isLeakedProbeAnswer(answer) {
+                const text = String(answer || '').trim();
+                if (!text || text.length < 8) {
+                    return true;
+                }
+                const lowered = text.toLowerCase();
+                return PROBE_LEAK_MARKERS.some(marker => lowered.includes(marker));
+            }
+
+            function classifyProbeStance(answer) {
+                if (!probeContainsBrand(answer)) {
+                    return 'absent';
+                }
+                const lowered = String(answer).toLowerCase();
+                const negative = ['별로', '단점', '불편', '아쉽', '단순히', '특이사항없'];
+                const positive = ['추천', '좋', '유리', '혜택', '할인', '적립', '훌륭'];
+                const hasNegative = negative.some(marker => lowered.includes(marker));
+                const hasPositive = positive.some(marker => lowered.includes(marker));
+                if (hasPositive && !hasNegative) {
+                    return 'positive';
+                }
+                if (hasNegative && !hasPositive) {
+                    return 'negative';
+                }
+                return 'neutral';
+            }
+
+            async function runProbeSuite(suite, questions, chunks, model, apiKey) {
+                const results = [];
+                const concurrency = 5;
+                let cursor = 0;
+
+                async function worker() {
+                    while (cursor < questions.length) {
+                        const index = cursor;
+                        cursor += 1;
+                        const item = questions[index];
+                        const references = selectProbeReferences(item.question, chunks);
+                        let closed = { answer: '', ok: false, error: '실행되지 않음' };
+                        let grounded = { answer: '', ok: false, error: '실행되지 않음' };
+                        try {
+                            closed = await answerProbeClosedBook(item.question, model, apiKey);
+                        } catch (error) {
+                            closed = { answer: '', ok: false, error: String(error.message || error) };
+                        }
+                        try {
+                            grounded = await answerProbeGrounded(item.question, references, model, apiKey);
+                        } catch (error) {
+                            grounded = { answer: '', ok: false, error: String(error.message || error) };
+                        }
+                        results.push({
+                            suite,
+                            question: item.question,
+                            category: item.category,
+                            intent: item.intent,
+                            closedBookAnswer: closed.answer,
+                            groundedAnswer: grounded.answer,
+                            closedBookOk: closed.ok,
+                            groundedOk: grounded.ok,
+                            closedBookBrand: probeContainsBrand(closed.answer),
+                            groundedBrand: probeContainsBrand(grounded.answer),
+                            groundedPremium: PROBE_PREMIUM_REGEX.test(grounded.answer),
+                            groundedCited: Boolean(grounded.cited),
+                            closedBookStance: classifyProbeStance(closed.answer),
+                            groundedStance: classifyProbeStance(grounded.answer),
+                            error: closed.error || grounded.error || null,
+                        });
+                        renderProbeProgress(suite, results.length, questions.length);
+                    }
+                }
+
+                const workers = Array.from({ length: Math.min(concurrency, questions.length) }, () => worker());
+                await Promise.all(workers);
+                return results;
+            }
+
+            function summarizeProbeSuite(results) {
+                const answered = results.filter(item => item.groundedOk);
+                const total = results.length;
+                if (!answered.length) {
+                    return {
+                        total, answered: 0, closedBookBrandRate: 0, groundedBrandRate: 0,
+                        visibilityLift: 0, citationRate: 0, premiumMentionRate: 0, positiveStanceRate: 0,
+                    };
+                }
+                const count = answered.length;
+                const closedBook = answered.filter(item => item.closedBookBrand).length / count;
+                const grounded = answered.filter(item => item.groundedBrand).length / count;
+                return {
+                    total,
+                    answered: count,
+                    closedBookBrandRate: closedBook,
+                    groundedBrandRate: grounded,
+                    visibilityLift: grounded - closedBook,
+                    citationRate: answered.filter(item => item.groundedCited).length / count,
+                    premiumMentionRate: answered.filter(item => item.groundedPremium).length / count,
+                    positiveStanceRate: answered.filter(item => item.groundedStance === 'positive').length / count,
+                };
+            }
+
+            function renderProbeProgress(suite, done, total) {
+                setProbeStatus('실행 중 | Running', `${suite} 스위트 ${done}/${total} 완료`);
+            }
+
+            function probePercent(value) {
+                return `${(Number(value || 0) * 100).toFixed(1)}%`;
+            }
+
+            function renderProbeQuestionBank() {
+                const container = document.getElementById('probeResults');
+                if (!container) {
+                    return;
+                }
+                const bank = vizData.probeQuestionBank || { brand: [], discovery: [] };
+                const brand = bank.brand || [];
+                const discovery = bank.discovery || [];
+                if (!brand.length && !discovery.length) {
+                    return;
+                }
+
+                const card = (label, value) => `
+                    <div class="probe-summary-card">
+                        <div class="probe-summary-label">${escapeHtml(label)}</div>
+                        <div class="probe-summary-value">${escapeHtml(value)}</div>
+                    </div>
+                `;
+
+                let html = '<div class="probe-summary-grid">';
+                html += card('브랜드 질문 | Brand', String(brand.length));
+                html += card('발견 질문 | Discovery', String(discovery.length));
+                html += card('전체 질문 | Total', String(brand.length + discovery.length));
+                html += card('출처 | Source', '사전 생성 질문 세트');
+                html += '</div>';
+
+                const suites = [
+                    ['brand', '브랜드 직접 질문 | Brand Mention', 'ssg7club·쓱7클럽·쓱세븐클럽을 직접 언급해 학습 정보와 인용 정보를 분리 확인합니다.'],
+                    ['discovery', '비브랜드 발견 질문 | Non-Brand Discovery', '브랜드를 언급하지 않고 상품·구매·직업·시간·멤버십 등으로 무기명 노출을 측정합니다.'],
+                ];
+
+                suites.forEach(([suiteKey, title, description]) => {
+                    const items = bank[suiteKey] || [];
+                    html += `<div class="probe-suite-block">
+                        <div class="probe-suite-head">
+                            <h3>${escapeHtml(title)}</h3>
+                            <span class="meta">${items.length}문</span>
+                        </div>
+                        <p class="probe-suite-desc">${escapeHtml(description)}</p>`;
+                    items.forEach((item, index) => {
+                        const mentionsBrand = probeContainsBrand(item.question);
+                        html += `<div class="probe-question">
+                            <div class="probe-question-head">
+                                <span class="probe-question-index">#${index + 1}</span>
+                                <span class="probe-question-category">${escapeHtml(item.category || '-')}</span>
+                                <span class="probe-flag ${mentionsBrand ? 'on' : 'off'}">${mentionsBrand ? '브랜드 언급' : '브랜드 미언급'}</span>
+                            </div>
+                            <p class="probe-question-text">${escapeHtml(item.question)}</p>
+                            ${item.intent ? `<p class="probe-suite-desc" style="margin:0;">의도: ${escapeHtml(item.intent)}</p>` : ''}
+                        </div>`;
+                    });
+                    html += '</div>';
+                });
+
+                container.className = '';
+                container.innerHTML = html;
+            }
+
+            function renderProbeResults(report) {
+                const container = document.getElementById('probeResults');
+                if (!container) {
+                    return;
+                }
+                if (!report || !report.results || !report.results.length) {
+                    container.className = 'qa-empty';
+                    container.textContent = '프로브 결과가 없습니다.';
+                    return;
+                }
+                container.className = '';
+
+                const summary = report.summary || {};
+                const card = (label, value) => `
+                    <div class="probe-summary-card">
+                        <div class="probe-summary-label">${escapeHtml(label)}</div>
+                        <div class="probe-summary-value">${escapeHtml(value)}</div>
+                    </div>
+                `;
+
+                let html = '<div class="probe-summary-grid">';
+                html += card('모델 | Model', report.model || '-');
+                html += card('전체 질문 | Questions', String(report.results.length));
+                html += card('브랜드 질문 | Brand', String(summary.brand?.total || 0));
+                html += card('발견 질문 | Discovery', String(summary.discovery?.total || 0));
+                html += card(
+                    '발견 가시성 상승 | Discovery Lift',
+                    probePercent(summary.discovery?.visibilityLift || 0)
+                );
+                html += card('평균 인용률 | Citation', probePercent(
+                    (Number(summary.brand?.citationRate || 0) + Number(summary.discovery?.citationRate || 0)) / 2
+                ));
+                html += '</div>';
+
+                const suites = [
+                    ['brand', '브랜드 직접 질문 | Brand Mention', 'ssg7club·쓱7클럽·쓱세븐클럽을 직접 언급해 학습 정보와 인용 정보를 분리 확인합니다.'],
+                    ['discovery', '비브랜드 발견 질문 | Non-Brand Discovery', '브랜드를 언급하지 않고 상품·구매·직업·시간·멤버십 등으로 무기명 노출을 측정합니다.'],
+                ];
+
+                suites.forEach(([suiteKey, title, description]) => {
+                    const stats = summary[suiteKey];
+                    if (!stats) {
+                        return;
+                    }
+                    const items = report.results.filter(item => item.suite === suiteKey);
+                    html += `<div class="probe-suite-block">
+                        <div class="probe-suite-head">
+                            <h3>${escapeHtml(title)}</h3>
+                            <span class="meta">${stats.total}문 · 폐북 ${escapeHtml(probePercent(stats.closedBookBrandRate))} → 그라운디드 ${escapeHtml(probePercent(stats.groundedBrandRate))} · 상승 ${escapeHtml(probePercent(stats.visibilityLift))}</span>
+                        </div>
+                        <p class="probe-suite-desc">${escapeHtml(description)}</p>`;
+
+                    items.forEach((item, index) => {
+                        html += `<div class="probe-question">
+                            <div class="probe-question-head">
+                                <span class="probe-question-index">#${index + 1}</span>
+                                <span class="probe-question-category">${escapeHtml(item.category || '-')}</span>
+                                <span class="probe-flag ${item.closedBookBrand ? 'on' : 'off'}">폐북 ${item.closedBookBrand ? '언급' : '미언급'}</span>
+                                <span class="probe-flag ${item.groundedBrand ? 'on' : 'off'}">그라운디드 ${item.groundedBrand ? '언급' : '미언급'}</span>
+                                ${item.groundedCited ? '<span class="probe-flag on">인용</span>' : ''}
+                                ${item.groundedPremium ? '<span class="probe-flag on">쓱세븐</span>' : ''}
+                            </div>
+                            <p class="probe-question-text">${escapeHtml(item.question)}</p>
+                            <div class="probe-answer-pair">
+                                <div class="probe-answer closed">
+                                    <div class="probe-answer-label">폐북 · 학습 기반 (Closed-book)</div>
+                                    ${escapeHtml(item.closedBookAnswer || '(응답 실패)')}
+                                </div>
+                                <div class="probe-answer grounded">
+                                    <div class="probe-answer-label">그라운디드 · 인용 기반 (Grounded)</div>
+                                    ${escapeHtml(item.groundedAnswer || '(응답 실패)')}
+                                </div>
+                            </div>
+                        </div>`;
+                    });
+                    html += '</div>';
+                });
+
+                container.innerHTML = html;
+            }
+
+            async function runVisibilityProbe() {
+                const button = document.getElementById('runProbeButton');
+                const apiKey = getProbeApiKey();
+                const model = getProbeModel();
+                const brandCount = getProbeCount('probeBrandCountInput', 20);
+                const discoveryCount = getProbeCount('probeDiscoveryCountInput', 50);
+
+                if (!apiKey) {
+                    setProbeStatus('API 키 필요 | API key required', 'OpenRouter 또는 OpenAI API 키를 입력하세요.');
+                    return;
+                }
+
+                try {
+                    const keyInput = document.getElementById('probeApiKeyInput');
+                    if (keyInput && keyInput.value.trim()) {
+                        try {
+                            localStorage.setItem(getProbeApiKeyStorageKey(getProbeProvider()), apiKey);
+                        } catch (error) {
+                            // storage may be unavailable; the run still works
+                        }
+                    }
+                } catch (error) {
+                    // ignore storage failures
+                }
+
+                if (button) {
+                    button.disabled = true;
+                }
+                const chunks = buildProbeContextPack();
+                setProbeStatus('질문 생성 중 | Generating questions', `브랜드 ${brandCount}개 · 발견 ${discoveryCount}개`);
+
+                try {
+                    const bank = vizData.probeQuestionBank || { brand: [], discovery: [] };
+                    const brandQuestions = (bank.brand || []).slice(0, brandCount);
+                    const discoveryQuestions = (bank.discovery || []).slice(0, discoveryCount);
+                    if (!brandQuestions.length && !discoveryQuestions.length) {
+                        setProbeStatus('질문 세트 없음 | No question set', '사전 생성된 질문이 없습니다.');
+                        return;
+                    }
+                    setProbeStatus('답변 수집 중 | Collecting answers', `총 ${brandQuestions.length + discoveryQuestions.length}문 × 2회 호출`);
+
+                    const brandResults = await runProbeSuite('brand', brandQuestions, chunks, model, apiKey);
+                    const discoveryResults = await runProbeSuite('discovery', discoveryQuestions, chunks, model, apiKey);
+                    const results = [...brandResults, ...discoveryResults];
+
+                    const report = {
+                        model,
+                        generatedAt: new Date().toISOString(),
+                        contextChunkCount: chunks.length,
+                        results,
+                        summary: {
+                            brand: summarizeProbeSuite(brandResults),
+                            discovery: summarizeProbeSuite(discoveryResults),
+                        },
+                    };
+
+                    renderProbeResults(report);
+                    try {
+                        localStorage.setItem('kgProbeReport', JSON.stringify(report));
+                    } catch (error) {
+                        // ignore storage failures
+                    }
+                    setProbeStatus(
+                        '완료 | Complete',
+                        `${results.length}문 완료 · 발견 가시성 상승 ${probePercent(report.summary.discovery?.visibilityLift || 0)}`
+                    );
+                } catch (error) {
+                    setProbeStatus('실패 | Failed', String(error.message || error));
+                } finally {
+                    if (button) {
+                        button.disabled = false;
+                    }
+                }
+            }
+
 
             function getQaProvider() {
                 const checked = document.querySelector('input[name="qaProvider"]:checked');
@@ -3419,6 +4357,49 @@
                     generateQaFromInputUrl();
                 });
 
+                // ===== Q&A mode switcher (probe / url-centered) =====
+                const qaModeButtons = document.querySelectorAll('.qa-mode-btn');
+                qaModeButtons.forEach(button => {
+                    button.addEventListener('click', () => {
+                        const mode = button.getAttribute('data-qa-mode');
+                        qaModeButtons.forEach(other => {
+                            const isActive = other === button;
+                            other.classList.toggle('active', isActive);
+                            other.setAttribute('aria-selected', isActive ? 'true' : 'false');
+                        });
+                        document.querySelectorAll('[data-qa-mode-panel]').forEach(panel => {
+                            panel.hidden = panel.getAttribute('data-qa-mode-panel') !== mode;
+                        });
+                    });
+                });
+
+                // ===== Visibility probe =====
+                const runProbeButton = document.getElementById('runProbeButton');
+                if (runProbeButton) {
+                    runProbeButton.addEventListener('click', () => {
+                        runVisibilityProbe();
+                    });
+                }
+
+                // Show the pre-built question bank straight away.
+                renderProbeQuestionBank();
+
+                // Restore a previous probe run so results survive a reload.
+                (function restoreProbeReport() {
+                    try {
+                        const stored = localStorage.getItem('kgProbeReport');
+                        if (!stored) {
+                            return;
+                        }
+                        const report = JSON.parse(stored);
+                        if (report?.results?.length) {
+                            renderProbeResults(report);
+                        }
+                    } catch (error) {
+                        // ignore malformed storage
+                    }
+                })();
+
                 // document.getElementById('relationsTable').addEventListener('click', event => {
                 //     const row = event.target.closest('tr');
                 //     if (!row) {
@@ -3581,6 +4562,333 @@
                     `;
                 }
 
+
+                function buildCoreEntitySection(coreEntities) {
+                    if (!coreEntities || !coreEntities.groups || !coreEntities.groups.length) {
+                        return '';
+                    }
+                    const groups = coreEntities.groups;
+
+                    return groups.map(group => {
+                        const flag = group.found ? 'on' : 'off';
+                        const formRows = (group.surfaceFormCounts || []).map(form => `
+                            <tr><td>${escapeHtml(form.surface)}</td><td>${form.count}</td></tr>
+                        `).join('') || '<tr><td colspan="2">표기 없음</td></tr>';
+
+                        const relationRows = (group.relationTypeCounts || []).slice(0, 8).map(item => `
+                            <tr><td><code>${escapeHtml(item.type)}</code></td><td>${item.count}</td></tr>
+                        `).join('') || '<tr><td colspan="2">관계 없음</td></tr>';
+
+                        const neighbourRows = (group.topNeighbours || []).slice(0, 10).map(item => `
+                            <tr><td>${escapeHtml(item.label)}</td><td>${item.count}</td></tr>
+                        `).join('') || '<tr><td colspan="2">연결 없음</td></tr>';
+
+                        return `
+                            <div class="probe-question" style="margin-bottom:14px;">
+                                <div class="probe-question-head">
+                                    <span class="probe-question-category">${escapeHtml(group.label)}</span>
+                                    <span class="probe-flag ${flag}">${group.found ? '엔티티 발견' : '엔티티 없음'}</span>
+                                    <span class="probe-flag ${group.isConsistent ? 'on' : 'off'}">${group.isConsistent ? '표기 일관' : '표기 분산'}</span>
+                                </div>
+                                <div class="probe-summary-grid" style="margin:10px 0;">
+                                    ${[
+                                        ['정규화 표기 | Surface forms', group.distinctSurfaceForms ?? 0],
+                                        ['출현(출발) | As subject', group.mentionAsSubject ?? 0],
+                                        ['출현(도착) | As object', group.mentionAsObject ?? 0],
+                                        ['총 사용 | Total uses', group.totalMentions ?? 0],
+                                    ].map(([label, value]) => `
+                                        <div class="probe-summary-card">
+                                            <div class="probe-summary-label">${escapeHtml(label)}</div>
+                                            <div class="probe-summary-value">${escapeHtml(String(value))}</div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                                <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:14px;">
+                                    <div>
+                                        <h4 style="margin:0 0 6px; font-size:0.85rem;">엔티티 표기 | Entity Surface Forms</h4>
+                                        <table class="report-table">
+                                            <thead><tr><th>표기</th><th>수</th></tr></thead>
+                                            <tbody>${formRows}</tbody>
+                                        </table>
+                                    </div>
+                                    <div>
+                                        <h4 style="margin:0 0 6px; font-size:0.85rem;">사용된 관계 유형 | Relation Types Used</h4>
+                                        <table class="report-table">
+                                            <thead><tr><th>관계 유형</th><th>수</th></tr></thead>
+                                            <tbody>${relationRows}</tbody>
+                                        </table>
+                                    </div>
+                                    <div>
+                                        <h4 style="margin:0 0 6px; font-size:0.85rem;">주요 연결 대상 | Top Connected</h4>
+                                        <table class="report-table">
+                                            <thead><tr><th>엔티티</th><th>수</th></tr></thead>
+                                            <tbody>${neighbourRows}</tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                ${group.containingProductCount ? `
+                                    <p class="probe-suite-desc" style="margin-top:10px;">
+                                        브랜드 문자열을 <strong>포함만</strong>하는 상품명 ${group.containingProductCount}개는 별개 엔티티로 유지됩니다
+                                        (예: ${escapeHtml((group.containingProducts || []).slice(0, 3).join(', '))}).
+                                    </p>
+                                ` : ''}
+                            </div>
+                        `;
+                    }).join('');
+                }
+
+                function buildOntologyReportSection(ontology) {
+                    if (!ontology || !ontology.entityCount) {
+                        return '';
+                    }
+                    const aliasFolds = ontology.aliasFolds || [];
+                    const relationTypes = ontology.relationTypes || [];
+                    const facts = ontology.facts || [];
+                    const canonicalEntities = ontology.canonicalEntities || [];
+                    const maxRelationShare = Math.max(
+                        1,
+                        ...relationTypes.map(item => item.count || 0),
+                    );
+
+                    return `
+                        <div class="report-section">
+                            <h3>8. 공식명 · 정규화 통계 | Official Name &amp; Normalization Stats</h3>
+                            <p>추출된 엔티티와 서술어를 대표명·관계 유형으로 정규화한 결과입니다.</p>
+                            ${buildCoreEntitySection(ontology.coreEntities)}
+                            <div class="report-kpi-grid">
+                                <div class="report-kpi"><div class="kpi-value">${ontology.entityCount ?? '-'}</div><div class="kpi-label">추출 엔티티 | Extracted</div></div>
+                                <div class="report-kpi"><div class="kpi-value">${ontology.canonicalCount ?? '-'}</div><div class="kpi-label">대표명 | Canonical</div></div>
+                                <div class="report-kpi"><div class="kpi-value">${ontology.aliasCount ?? '-'}</div><div class="kpi-label">별칭 병합 | Aliases Folded</div></div>
+                                <div class="report-kpi"><div class="kpi-value">${ontology.relationTypeCount ?? '-'}</div><div class="kpi-label">관계 유형 | Relation Types</div></div>
+                            </div>
+                            ${aliasFolds.length ? `
+                                <h4>별칭 → 대표명 | Alias → Canonical</h4>
+                                <table class="report-table">
+                                    <thead><tr><th>대표명</th><th>병합된 표기</th><th>개수</th></tr></thead>
+                                    <tbody>
+                                        ${aliasFolds.map(fold => `<tr><td>${escapeHtml(fold.canonical)}</td><td>${escapeHtml((fold.aliases || []).join(', '))}</td><td>${fold.count}</td></tr>`).join('')}
+                                    </tbody>
+                                </table>
+                            ` : '<p>병합된 별칭이 없습니다 — 추출된 엔티티 표기가 이미 일관됩니다.</p>'}
+                            <h4>관계 유형 정규화 | Relation Type Normalization</h4>
+                            ${relationTypes.map(item => buildReportBar(
+                                `${item.type} (${(item.predicates || []).slice(0, 3).join(', ')})`,
+                                item.count,
+                                maxRelationShare,
+                                '#7c3aed',
+                            )).join('') || '<p>관계 없음</p>'}
+                            ${facts.length ? `
+                                <h4>정규화된 사실 | Normalized Facts</h4>
+                                <table class="report-table">
+                                    <thead><tr><th>주어</th><th>관계 유형</th><th>목적어</th></tr></thead>
+                                    <tbody>
+                                        ${facts.slice(0, 15).map(fact => `<tr><td>${escapeHtml(fact.subject)}</td><td><code>${escapeHtml(fact.relationType)}</code> <span class="meta">${escapeHtml(fact.predicate)}</span></td><td>${escapeHtml(fact.object)}</td></tr>`).join('')}
+                                    </tbody>
+                                </table>
+                            ` : ''}
+                            ${canonicalEntities.length ? `
+                                <h4>대표 엔티티 | Canonical Entities</h4>
+                                <table class="report-table">
+                                    <thead><tr><th>대표명</th><th>관계 수</th><th>별칭</th></tr></thead>
+                                    <tbody>
+                                        ${canonicalEntities.slice(0, 12).map(entity => `<tr><td>${escapeHtml(entity.canonical)}</td><td>${entity.relationCount}</td><td>${escapeHtml((entity.sourceLabels || []).join(', '))}</td></tr>`).join('')}
+                                    </tbody>
+                                </table>
+                            ` : ''}
+                        </div>
+                    `;
+                }
+
+                function buildRelationProgramSection(program) {
+                    if (!program || !program.nodes || !program.nodes.length) {
+                        return '';
+                    }
+                    const nodes = program.nodes;
+                    const edges = program.edges || [];
+                    const maxDegree = Math.max(1, ...nodes.map(node => node.degree || 0));
+
+                    return `
+                        <div class="report-section">
+                            <h3>9. 엔티티 관계 그래프 프로그램 | Entity Relation Graph Program</h3>
+                            <p>차수 상위 ${nodes.length}개 엔티티(${program.totalNodes}개 중 ${program.truncated ? `${program.truncated}개 생략` : '전체'})와 정규화된 관계 ${edges.length}개입니다.</p>
+                            <div class="report-kpi-grid">
+                                <div class="report-kpi"><div class="kpi-value">${program.totalNodes ?? '-'}</div><div class="kpi-label">전체 노드 | Nodes</div></div>
+                                <div class="report-kpi"><div class="kpi-value">${program.totalEdges ?? '-'}</div><div class="kpi-label">전체 엣지 | Edges</div></div>
+                                <div class="report-kpi"><div class="kpi-value">${nodes.length}</div><div class="kpi-label">표시 노드 | Shown</div></div>
+                                <div class="report-kpi"><div class="kpi-value">${edges.length}</div><div class="kpi-label">표시 엣지 | Shown</div></div>
+                            </div>
+                            <h4>노드 | Nodes</h4>
+                            ${nodes.slice(0, 20).map(node => buildReportBar(
+                                `${node.officialName || node.label}${node.surfaceForms && node.surfaceForms.length > 1 ? ` (${node.surfaceForms.length} 표기)` : ''}`,
+                                node.degree,
+                                maxDegree,
+                                '#0ea5e9',
+                            )).join('')}
+                            <h4>관계 | Relations</h4>
+                            <table class="report-table">
+                                <thead><tr><th>출발</th><th>관계 유형</th><th>도착</th></tr></thead>
+                                <tbody>
+                                    ${edges.slice(0, 20).map(edge => `<tr><td>${escapeHtml(edge.source)}</td><td><code>${escapeHtml(edge.relationType)}</code> <span class="meta">${escapeHtml(edge.predicate)}</span></td><td>${escapeHtml(edge.target)}</td></tr>`).join('') || '<tr><td colspan="3">표시할 관계 없음</td></tr>'}
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                }
+
+                function buildSeoAuditSection(seoAudit) {
+                    const pages = seoAudit?.pages || [];
+                    const summary = seoAudit?.summary || {};
+                    if (!pages.length) {
+                        return `
+                            <div class="report-section">
+                                <h3>10. SEO · 구조화 데이터 | SEO &amp; Structured Data</h3>
+                                <p>원본 HTML을 확보하지 못해 title·description·OG·제목 계층·구조화 데이터를 점검할 수 없습니다.</p>
+                            </div>
+                        `;
+                    }
+                    const missing = summary.missingCounts || {};
+                    const maxMissing = Math.max(1, ...Object.values(missing));
+
+                    return `
+                        <div class="report-section">
+                            <h3>10. SEO · 구조화 데이터 | SEO &amp; Structured Data</h3>
+                            <p>수집한 ${summary.pageCount}개 페이지의 title·description·Open Graph·제목 계층·JSON-LD를 점검했습니다.</p>
+                            <div class="report-kpi-grid">
+                                <div class="report-kpi"><div class="kpi-value">${summary.averageScore ?? '-'}</div><div class="kpi-label">평균 점수 | Avg Score</div></div>
+                                <div class="report-kpi"><div class="kpi-value">${summary.goodCount ?? 0}</div><div class="kpi-label">양호 | Good</div></div>
+                                <div class="report-kpi"><div class="kpi-value">${summary.warnCount ?? 0}</div><div class="kpi-label">경고 | Warn</div></div>
+                                <div class="report-kpi"><div class="kpi-value">${summary.poorCount ?? 0}</div><div class="kpi-label">미흡 | Poor</div></div>
+                            </div>
+                            ${Object.keys(missing).length ? `
+                                <h4>부족 항목 | Missing Signals</h4>
+                                ${Object.entries(missing).map(([label, count]) => buildReportBar(label, count, maxMissing, '#dc2626')).join('')}
+                            ` : '<p>모든 페이지가 기준을 충족합니다.</p>'}
+                            <h4>페이지별 점검 | Per-Page Audit</h4>
+                            <table class="report-table">
+                                <thead><tr><th>페이지</th><th>점수</th><th>title</th><th>description</th><th>OG</th><th>h1</th><th>제목 계층</th><th>JSON-LD</th></tr></thead>
+                                <tbody>
+                                    ${pages.map(page => {
+                                        const check = key => {
+                                            const found = (page.checks || []).find(item => item.key === key);
+                                            return found && found.passed;
+                                        };
+                                        const ogCount = Object.values(page.og || {}).filter(Boolean).length;
+                                        return `<tr>
+                                            <td><a class="report-link" href="${escapeHtml(page.url)}" target="_blank" rel="noopener">${escapeHtml(shortUrl(page.url, 44))}</a></td>
+                                            <td>${page.score}</td>
+                                            <td>${check('title') ? 'O' : 'X'} (${page.titleLength ?? 0})</td>
+                                            <td>${check('description') ? 'O' : 'X'} (${page.descriptionLength ?? 0})</td>
+                                            <td>${ogCount}/${Object.keys(page.og || {}).length}</td>
+                                            <td>${page.h1Count ?? '-'}</td>
+                                            <td>${(page.levelSkips || []).length ? 'X' : 'O'}</td>
+                                            <td>${(page.jsonLdTypes || []).length ? escapeHtml((page.jsonLdTypes || []).join(', ')) : 'X'}</td>
+                                        </tr>`;
+                                    }).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                }
+
+                function buildProbeQuestionList(brandBank, discoveryBank) {
+                    const render = (items, title) => `
+                        <h4>${escapeHtml(title)} (${items.length}문)</h4>
+                        <table class="report-table">
+                            <thead><tr><th>#</th><th>카테고리</th><th>질문</th></tr></thead>
+                            <tbody>
+                                ${items.map((item, index) => `
+                                    <tr><td>${index + 1}</td><td>${escapeHtml(item.category || '-')}</td><td>${escapeHtml(item.question)}</td></tr>
+                                `).join('') || '<tr><td colspan="3">없음</td></tr>'}
+                            </tbody>
+                        </table>
+                    `;
+                    return render(brandBank || [], '브랜드 직접 질문 | Brand Mention')
+                        + render(discoveryBank || [], '비브랜드 발견 질문 | Non-Brand Discovery');
+                }
+
+                function buildQaReportSection(qaReport, probeBank) {
+                    const summary = qaReport?.summary || {};
+                    const results = qaReport?.results || [];
+                    const brandBank = probeBank?.brand || [];
+                    const discoveryBank = probeBank?.discovery || [];
+
+                    if (!results.length) {
+                        return `
+                            <div class="report-section">
+                                <h3>11. Q&amp;A · 가시성 | Q&amp;A Visibility</h3>
+                                <p>Q&amp;A 탭의 <strong>가시성 프로브</strong>에서 20(브랜드 직접) + 50(비브랜드 발견) 질문 세트가 준비되어 있습니다. 실행 결과는 이 섹션에도 표시됩니다.</p>
+                                <div class="report-kpi-grid">
+                                    <div class="report-kpi"><div class="kpi-value">${brandBank.length}</div><div class="kpi-label">브랜드 질문 | Brand</div></div>
+                                    <div class="report-kpi"><div class="kpi-value">${discoveryBank.length}</div><div class="kpi-label">발견 질문 | Discovery</div></div>
+                                </div>
+                                <h4>준비된 질문 세트 | Prepared Question Set</h4>
+                                ${buildProbeQuestionList(brandBank, discoveryBank)}
+                            </div>
+                        `;
+                    }
+
+                    const suites = [
+                        ['brand', '브랜드 직접 질문 | Brand Mention'],
+                        ['discovery', '비브랜드 발견 질문 | Non-Brand Discovery'],
+                    ];
+                    const pct = value => `${(Number(value || 0) * 100).toFixed(1)}%`;
+
+                    return `
+                        <div class="report-section">
+                            <h3>11. Q&amp;A · 가시성 | Q&amp;A Visibility</h3>
+                            <p>폐북(학습) 대비 그라운디드(인용) 답변에서 멤버십 노출이 얼마나 달라지는지 비교합니다.</p>
+                            <table class="report-table">
+                                <thead><tr><th>스위트</th><th>질문 수</th><th>폐북 언급</th><th>그라운디드 언급</th><th>가시성 상승</th><th>인용률</th><th>긍정 태도</th></tr></thead>
+                                <tbody>
+                                    ${suites.map(([key, label]) => {
+                                        const stats = summary[key];
+                                        if (!stats) {
+                                            return '';
+                                        }
+                                        return `<tr>
+                                            <td>${escapeHtml(label)}</td>
+                                            <td>${stats.total}</td>
+                                            <td>${escapeHtml(pct(stats.closedBookBrandRate))}</td>
+                                            <td>${escapeHtml(pct(stats.groundedBrandRate))}</td>
+                                            <td>${escapeHtml(pct(stats.visibilityLift))}</td>
+                                            <td>${escapeHtml(pct(stats.citationRate))}</td>
+                                            <td>${escapeHtml(pct(stats.positiveStanceRate))}</td>
+                                        </tr>`;
+                                    }).join('')}
+                                </tbody>
+                            </table>
+                            <h4>질문별 결과 | Per-Question Results</h4>
+                            <p class="probe-suite-desc">
+                                각 질문의 폐북(컨텍스트 없음) 답변과 그라운디드(수집 원문 인용) 답변을 나란히 비교합니다.
+                                모델: <code>${escapeHtml(qaReport.model || '-')}</code>
+                            </p>
+                            ${results.map((item, index) => `
+                                <div class="probe-question">
+                                    <div class="probe-question-head">
+                                        <span class="probe-question-index">#${index + 1}</span>
+                                        <span class="probe-question-category">${escapeHtml(item.category || '')}</span>
+                                        <span class="probe-flag ${item.closedBookBrand ? 'on' : 'off'}">폐북 ${item.closedBookBrand ? '언급' : '미언급'}</span>
+                                        <span class="probe-flag ${item.groundedBrand ? 'on' : 'off'}">그라운디드 ${item.groundedBrand ? '언급' : '미언급'}</span>
+                                        ${item.groundedCited ? '<span class="probe-flag on">인용</span>' : ''}
+                                        ${item.groundedPremium ? '<span class="probe-flag on">쓱세븐</span>' : ''}
+                                    </div>
+                                    <p class="probe-question-text">${escapeHtml(item.question)}</p>
+                                    <div class="probe-answer-pair">
+                                        <div class="probe-answer closed">
+                                            <div class="probe-answer-label">폐북 · 학습 기반 (Closed-book)</div>
+                                            ${escapeHtml(item.closedBookAnswer || '(응답 실패)')}
+                                        </div>
+                                        <div class="probe-answer grounded">
+                                            <div class="probe-answer-label">그라운디드 · 인용 기반 (Grounded)</div>
+                                            ${escapeHtml(item.groundedAnswer || '(응답 실패)')}
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                }
+
                 function generateOntologyReport() {
                     const content = document.getElementById('reportContent');
                     if (!content) {
@@ -3594,11 +4902,18 @@
                     const edgeClusters = [...(vizData.edgeClusters || [])].sort((a, b) => b.size - a.size);
                     const docs = [...(vizData.sourceDocuments || [])];
                     const build = vizData.buildInfo || {};
+                    const ontology = vizData.ontology || {};
+                    const relationProgram = vizData.relationProgram || {};
+                    const seoAudit = vizData.seoAudit || { pages: [], summary: {} };
+                    const qaReport = vizData.qaReport || {};
+                    const probeBank = vizData.probeQuestionBank || { brand: [], discovery: [] };
                     const clusterNote = vizData.clusterProvenance === 'heuristic'
                         ? '표시 시점 휴리스틱 분류 (저장된 클러스터 없음)'
                         : '저장된 클러스터 기준';
 
-                    const hubEntities = nodes.slice(0, 10);
+                    // Section 3: every entity with degree>=3, sorted descending
+                    const hubEntities = nodes.filter(n => (n.degree || 0) >= 3)
+                        .sort((a, b) => (b.degree || 0) - (a.degree || 0));
                     const maxDegree = hubEntities.length ? hubEntities[0].degree : 0;
                     const unclustered = nodes.filter(n => !n.cluster);
                     const isolated = nodes.filter(n => n.degree === 0);
@@ -3647,7 +4962,12 @@
                                 <div class="report-kpi"><div class="kpi-value">${stats.entityClusters ?? clusters.length}</div><div class="kpi-label">엔티티 클러스터</div></div>
                                 <div class="report-kpi"><div class="kpi-value">${stats.edgeClusters ?? edgeClusters.length}</div><div class="kpi-label">관계 클러스터</div></div>
                                 <div class="report-kpi"><div class="kpi-value">${stats.components ?? '-'}</div><div class="kpi-label">연결 요소 | Components</div></div>
-                                <div class="report-kpi"><div class="kpi-value">${stats.averageDegree ?? '-'}</div><div class="kpi-label">평균 차수 | Avg Degree</div></div>
+                                <div class="report-kpi"><div class="kpi-value">${docs.length}</div><div class="kpi-label">수집 문서 | Documents</div></div>
+                        </div>
+                        <div class="meta" style="margin-top:8px;">엔티티: 핵심 개념(상품·혜택·브랜드·조건 등) · 관계: 주어–서술어–목적어(triple) · 차수: 한 노드에 연결된 선의 수 · 클러스터: 유사 개념 묶음 · 구성요소: 연결된 네트워크 조각 — <a href="#" onclick="document.querySelector('button[data-tab=glossary]').click();return false" class="meta">용어집 전체 보기</a></div>
+                        </div>
+                        <div class="report-section">
+                            <h3>2. 정보 이해 요약 | How Pages Are Understood</h3>
                                 <div class="report-kpi"><div class="kpi-value">${docs.length}</div><div class="kpi-label">수집 문서 | Documents</div></div>
                             </div>
                         </div>
@@ -3656,9 +4976,10 @@
                             <ul>${understanding.map(item => `<li>${item}</li>`).join('')}</ul>
                         </div>
                         <div class="report-section">
-                            <h3>3. 핵심 허브 엔티티 TOP 10 | Hub Entities</h3>
-                            <p>차수가 높은 순 — 정보 전달의 중심축입니다. 클릭하면 네트워크에서 선택됩니다.</p>
+                            <h3>3. 핵심 허브 엔티티 | Hub Entities (차수 3↑)</h3>
+                            <p>차수가 3 이상인 엔티티만 — 정보 전달의 중심축입니다. 클릭하면 네트워크에서 선택됩니다.</p>
                             ${hubEntities.map(n => buildReportBar(`${n.label} (${n.cluster || '미분류'})`, n.degree, maxDegree, n.color)).join('')}
+                            <p class='meta' style='margin-top:6px;'>3차수 이상 ${hubEntities.length}개 표시 (전체 ${nodes.length}개 중)</p>
                         </div>
                         <div class="report-section">
                             <h3>4. 주제 클러스터 | Topic Clusters</h3>
@@ -3686,13 +5007,32 @@
                         </div>
                         <div class="report-section">
                             <h3>7. 근거 품질 | Evidence Quality</h3>
-                            <ul>
-                                <li>원문 언급이 있는 엔티티: ${withMentions.length}/${nodes.length} (${nodes.length ? Math.round((withMentions.length / nodes.length) * 100) : 0}%)</li>
-                                <li>언급 없음(추론 라벨 의심): ${withoutMentions.length}개 ${withoutMentions.length ? `— 예: ${escapeHtml(withoutMentions.slice(0, 5).map(n => n.label).join(', '))}` : ''}</li>
-                                <li>동시 언급 근거가 있는 관계: ${edgesWithEvidence.length}/${edges.length} (${evidenceRate}%)</li>
-                                <li>미분류 엔티티: ${unclustered.length}개 · 고립 엔티티: ${isolated.length}개</li>
-                            </ul>
+                            <p style="margin:4px 0 8px;" class="meta">아래 수치가 뜻하는 바를 함께 읽어 주세요. 용어가 낯설면 우측 용어집에서 확인할 수 있습니다.</p>
+                            <table class="report-table">
+                                <thead><tr><th>항목</th><th>수치</th><th>의미</th></tr></thead>
+                                <tbody>
+                                    <tr><td>원문 언급이 있는 엔티티</td><td>${withMentions.length}/${nodes.length} (${nodes.length ? Math.round((withMentions.length / nodes.length) * 100) : 0}%)</td><td>원문에서 직접 확인 가능한 엔티티. 높을수록 환각이 적음</td></tr>
+                                    <tr><td>추론 라벨 의심</td><td>${withoutMentions.length}개</td><td>원문 언급이 없어 LLM이 생성한 라벨일 가능성 높음 ${withoutMentions.length ? `— 예: ${escapeHtml(withoutMentions.slice(0, 5).map(n => n.label).join(', '))}` : ''}</td></tr>
+                                    <tr><td>근거 있는 관계</td><td>${edgesWithEvidence.length}/${edges.length} (${evidenceRate}%)</td><td>두 엔티티가 같은 문서에서 함께 언급되어 관계에 근거가 있음</td></tr>
+                                    <tr><td>미분류 · 고립 엔티티</td><td>${unclustered.length}개 / ${isolated.length}개</td><td>미분류: 클러스터에 속하지 않음. 고립: 아무 관계도 없음</td></tr>
+                                </tbody>
+                            </table>
+                            ${(() => {
+                                const sEdges = [...edgesWithEvidence].sort((a, b) => (b.provenance?.supportingDocs?.length||0) - (a.provenance?.supportingDocs?.length||0));
+                                const examples = sEdges.slice(0, 6);
+                                if (!examples.length) return '';
+                                const rows = examples.map(e => {
+                                    const docs = e.provenance?.supportingDocs || [];
+                                    const snippet = e.provenance?.snippet || (docs[0]?.snippet || '');
+                                    return escapeHtml(e.source) + ' \u2014' + escapeHtml(e.predicate) + '\u2192 ' + escapeHtml(e.target) + '|' + (docs.length + '건') + '|' + escapeHtml(String(snippet).slice(0,80));
+                                }).map(r => { const p=r.split('|'); return '<tr><td>' + p[0] + '</td><td>' + p[1] + '</td><td style=max-width:280px;word-break:break-all;font-size:0.82em>' + p[2] + '</td></tr>'; }).join('');
+                                return '<h4>근거 예시 | Evidence Examples</h4><table class=report-table><thead><tr><th>관계</th><th>근거 문서</th><th>인용 스니펫</th></tr></thead><tbody>' + rows + '</tbody></table><p class=meta style=margin-top:6px>관계 클릭 시 원문 위치·도메인·수집 경로·문자 위치(%)와 전후 문맥이 제공됩니다.</p>';
+                            })()}
                         </div>
+                        ${buildOntologyReportSection(ontology)}
+                        ${buildRelationProgramSection(relationProgram)}
+                        ${buildSeoAuditSection(seoAudit)}
+                        ${buildQaReportSection(qaReport, probeBank)}
                     `;
 
                     content.querySelectorAll('.report-bar-row').forEach(row => {

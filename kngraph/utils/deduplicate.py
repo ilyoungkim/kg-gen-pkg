@@ -65,6 +65,14 @@ class DeduplicateList:
             normalized_items.add(singular)
 
         # Deduplicate the normalized strings
+        if len(normalized_items) == 0:
+            # No records to deduplicate — set stats and exit gracefully
+            self.deduplicated_items = 0
+            self.duplicate_items = 0
+            self.reduction = 0.0
+            self.deduplicated = []
+            return self.deduplicated
+
         semhash = SemHash.from_records(records=list(normalized_items))
         deduplication_result = semhash.self_deduplicate(threshold=self.threshold)
 

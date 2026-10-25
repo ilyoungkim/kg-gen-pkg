@@ -12,6 +12,9 @@ import colorsys
 import webbrowser
 
 from kngraph.models import Graph
+from kngraph.ontology import build_ontology_stats, build_relation_program
+from kngraph.qa_probe import load_question_bank
+from kngraph.seo_audit import audit_page_html, summarize_audits
 
 
 # Heuristic fallback clusters applied at render time when the stored graph
@@ -281,6 +284,9 @@ def _build_view_model(
     source_documents: list[dict[str, str]] | None = None,
     qa_runtime_config: dict[str, Any] | None = None,
     build_info: dict[str, Any] | None = None,
+    source_html_documents: list[dict[str, str]] | None = None,
+    qa_pairs: list[dict[str, Any]] | None = None,
+    qa_report: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     # Collect all entities from both the entities set and relations
     all_entities = set(graph.entities)
@@ -514,6 +520,26 @@ def _build_view_model(
     # Relation suggestion limit: based on visible edges, clamp to [20,50]
     relation_suggestion_limit = min(len(edges_view), max(20, min(50, int(len(edges_view) * 0.1))))
 
+    # ---- Feature 1: official names, facts, entity/relation normalization ----
+    ordered_relations = [
+        (subject, predicate, obj) for subject, predicate, obj in relations
+    ]
+    ontology_stats = build_ontology_stats(entities, ordered_relations)
+
+    # ---- Feature 2: entity relation graph program ----
+    relation_program = build_relation_program(entities, ordered_relations)
+
+    # ---- Feature 3: SEO / structured data audit ----
+    seo_audits = []
+    for document in source_html_documents or []:
+        html = str(document.get("html", "")).strip()
+        if not html:
+            continue
+        seo_audits.append(
+            audit_page_html(html, url=str(document.get("url", "")))
+        )
+    seo_summary = summarize_audits(seo_audits)
+
     return {
         "nodes": nodes_view,
         "edges": edges_view,
@@ -529,6 +555,15 @@ def _build_view_model(
         "clusterProvenance": "heuristic" if used_heuristic_clusters else "stored",
         "qaRuntime": qa_runtime_config or {"enabled": False, "endpoint": None, "model": None},
         "buildInfo": build_info or {"series": None, "build": None, "version": None, "builtAt": None},
+        "ontology": ontology_stats,
+        "relationProgram": relation_program,
+        "seoAudit": {
+            "pages": seo_audits,
+            "summary": seo_summary,
+        },
+        "qaPairs": qa_pairs or [],
+        "qaReport": qa_report or {},
+        "probeQuestionBank": load_question_bank(),
         "ui": {
             "rootEntitySuggestionLimit": root_suggestion_limit,
             "clusterSuggestionLimit": cluster_suggestion_limit,
@@ -572,6 +607,9 @@ def visualize(
     qa_runtime_config: dict[str, Any] | None = None,
     build_info: dict[str, Any] | None = None,
     output_metadata: dict[str, Any] | None = None,
+    source_html_documents: list[dict[str, str]] | None = None,
+    qa_pairs: list[dict[str, Any]] | None = None,
+    qa_report: dict[str, Any] | None = None,
 ) -> Path:
     """Render an interactive dashboard for a graph.
 
@@ -592,6 +630,9 @@ def visualize(
         source_documents=source_documents,
         qa_runtime_config=qa_runtime_config,
         build_info=build_info,
+        source_html_documents=source_html_documents,
+        qa_pairs=qa_pairs,
+        qa_report=qa_report,
     )
     html = HTML_TEMPLATE.replace(
         "<!--DATA-->",
