@@ -4,7 +4,7 @@ Two LLM-generated question suites measure how an answer engine (ChatGPT,
 Perplexity, Gemini, ...) surfaces the SSG7 membership:
 
 ``brand``
-    ~20 questions that explicitly name ``ssg7club`` / ``쓱7클럽`` / ``쓱세븐클럽``.
+    ~20 questions that explicitly name ``쓱7클럽``.
     These separate what the model *learned* (closed-book answer, no context)
     from what it *cites* (grounded answer, crawled SSG7 pages supplied).
 
@@ -272,26 +272,22 @@ _BRAND_QUESTION_CATEGORIES: tuple[tuple[str, str], ...] = (
 
 _BRAND_QUESTION_SYSTEM = (
     "You are an AEO/GEO (Answer Engine Optimization) strategist writing evaluation "
-    "questions for the SSG7 membership. Brand surface forms: ssg7club, 쓱7클럽, "
-    "쓱세븐클럽. You write questions a real user would type into an "
-    "AI assistant. You never invent facts about the brand; you only write the "
-    "questions."
+    "questions for the SSG7 membership. Use the exact brand name 쓱7클럽 in every "
+    "question. You write questions a real user would type into an AI assistant. You "
+    "never invent facts about the brand; you only write the questions."
 )
 
 _BRAND_QUESTION_USER = """\
 Write exactly {count} evaluation questions about the SSG7 membership.
 
-Brand surface forms to use in the questions (mix them across questions):
-- ssg7club
+Brand name to use in every question:
 - 쓱7클럽
-- 쓱세븐클럽
 
 Spread the questions across these categories (about {per_category} each):
 {category_list}
 
 Rules:
-- The brand MUST be named explicitly in every question. Use each surface form
-  at least once.
+- The brand MUST be named explicitly in every question as "쓱7클럽".
 - Questions must be answerable from public web content about the brand.
 - Vary the phrasing: some short keyword-style, some full natural sentences.
 - Do NOT include the answer.

@@ -2,7 +2,7 @@
   "model": "openai/gpt-oss-120b",
   "brand": [
     {
-      "question": "ssg7club 멤버십 등급은 어떻게 구분되나요?",
+      "question": "쓱7클럽 멤버십 등급은 어떻게 구분되나요?",
       "category": "fact",
       "intent": "멤버십 등급 확인"
     },
@@ -12,12 +12,12 @@
       "intent": "가입비 및 결제 방식 확인"
     },
     {
-      "question": "쓱세븐클럽의 기본 구성(포인트 적립률·쿠폰 종류)은 무엇인가요?",
+      "question": "쓱7클럽의 기본 구성(포인트 적립률·쿠폰 종류)은 무엇인가요?",
       "category": "fact",
       "intent": "기본 구성 확인"
     },
     {
-      "question": "ssg7club에서 제공하는 월간 쿠폰은 언제 발급되나요?",
+      "question": "쓱7클럽에서 제공하는 월간 쿠폰은 언제 발급되나요?",
       "category": "benefit",
       "intent": "쿠폰 발급 시점 확인"
     },
@@ -27,12 +27,12 @@
       "intent": "사은품 종류 확인"
     },
     {
-      "question": "쓱세븐클럽 포인트 적립 비율은 구매 금액 대비 몇 퍼센트인가요?",
+      "question": "쓱7클럽 포인트 적립 비율은 구매 금액 대비 몇 퍼센트인가요?",
       "category": "benefit",
       "intent": "포인트 적립 비율 확인"
     },
     {
-      "question": "ssg7club 포인트는 어떻게 현금처럼 사용할 수 있나요?",
+      "question": "쓱7클럽 포인트는 어떻게 현금처럼 사용할 수 있나요?",
       "category": "usage",
       "intent": "포인트 사용 방법 확인"
     },
@@ -42,12 +42,12 @@
       "intent": "모바일 쿠폰 적용 절차 확인"
     },
     {
-      "question": "쓱세븐클럽 적립금을 온라인 쇼핑몰에서 사용하는 방법을 알려 주세요.",
+      "question": "쓱7클럽 적립금을 온라인 쇼핑몰에서 사용하는 방법을 알려 주세요.",
       "category": "usage",
       "intent": "온라인 사용 방법 확인"
     },
     {
-      "question": "ssg7club 회원 탈퇴는 언제든 가능한가요? 절차는 어떻게 되나요?",
+      "question": "쓱7클럽 회원 탈퇴는 언제든 가능한가요? 절차는 어떻게 되나요?",
       "category": "policy",
       "intent": "탈퇴 가능 여부 및 절차 확인"
     },
@@ -57,12 +57,12 @@
       "intent": "포인트 소멸 시점 확인"
     },
     {
-      "question": "쓱세븐클럽 회원 등급이 만료되면 어떤 혜택이 중단되나요?",
+      "question": "쓱7클럽 회원 등급이 만료되면 어떤 혜택이 중단되나요?",
       "category": "policy",
       "intent": "등급 만료 시 혜택 확인"
     },
     {
-      "question": "ssg7club과 롯데멤버스의 포인트 적립률을 비교해 주세요.",
+      "question": "쓱7클럽과 롯데멤버스의 포인트 적립률을 비교해 주세요.",
       "category": "comparison",
       "intent": "적립률 비교"
     },
@@ -72,12 +72,12 @@
       "intent": "연회비 차이 확인"
     },
     {
-      "question": "쓱세븐클럽이 제공하는 사은품은 다른 대형마트 멤버십과 어떤 점이 다른가요?",
+      "question": "쓱7클럽이 제공하는 사은품은 다른 대형마트 멤버십과 어떤 점이 다른가요?",
       "category": "comparison",
       "intent": "사은품 차별점 확인"
     },
     {
-      "question": "저는 매주 대형마트에서 식료품을 구매하는데, ssg7club이 나에게 적합한지 알려 주세요.",
+      "question": "저는 매주 대형마트에서 식료품을 구매하는데, 쓱7클럽이 나에게 적합한지 알려 주세요.",
       "category": "situation",
       "intent": "개인 구매 패턴에 맞는지 평가"
     },
@@ -87,12 +87,12 @@
       "intent": "온라인 사용 적합성 평가"
     },
     {
-      "question": "ssg7club에서 포인트 적립이 안 되는 품목은 무엇인가요?",
+      "question": "쓱7클럽에서 포인트 적립이 안 되는 품목은 무엇인가요?",
       "category": "limitation",
       "intent": "제외 품목 확인"
     },
     {
-      "question": "쓱세븐클럽 회원이 받을 수 없는 할인 혜택은 어떤 경우인가요?",
+      "question": "쓱7클럽 회원이 받을 수 없는 할인 혜택은 어떤 경우인가요?",
       "category": "limitation",
       "intent": "제한 할인 확인"
     },

@@ -3,6 +3,9 @@
 These do not call any LLM or network endpoint.
 """
 
+import json
+from pathlib import Path
+
 from src.kngraph.qa_probe import (
     _classify_stance,
     _select_references,
@@ -12,6 +15,15 @@ from src.kngraph.qa_probe import (
     summarize_suite,
     ProbeResult,
 )
+
+
+def test_brand_probe_bank_uses_canonical_question_title():
+    bank_path = Path(__file__).parents[1] / "src/kngraph/prompts/probe_bank.json"
+    bank = json.loads(bank_path.read_text(encoding="utf-8"))
+
+    assert all("쓱7클럽" in item["question"] for item in bank["brand"])
+    assert all("ssg7club" not in item["question"].lower() for item in bank["brand"])
+    assert all("쓱세븐클럽" not in item["question"] for item in bank["brand"])
 
 
 def test_contains_brand_detects_all_surface_forms():
