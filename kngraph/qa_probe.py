@@ -60,8 +60,8 @@ BRAND_PATTERNS: tuple[str, ...] = (
 
 _BRAND_REGEX = re.compile("|".join(BRAND_PATTERNS), re.IGNORECASE)
 
-# The premium tier is tracked separately because it is a stronger signal
-# than the base membership name.
+# The "쓱세븐" spelling (세븐 = seven = 7) is tracked separately because it
+# is a distinct surface form of the same membership, not a different tier.
 _PREMIUM_REGEX = re.compile(r"쓱\s*세븐|쓱세븐", re.IGNORECASE)
 
 # Categories used to spread the non-brand discovery suite.
@@ -101,7 +101,7 @@ def contains_brand(text: str) -> bool:
 
 
 def mentions_premium_tier(text: str) -> bool:
-    """True when the text names the premium (쓱세븐) tier."""
+    """True when the text uses the 쓱세븐(세븐) spelling of the membership."""
     return bool(_PREMIUM_REGEX.search(text or ""))
 
 
