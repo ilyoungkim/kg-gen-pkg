@@ -28,7 +28,7 @@ DEFAULT_QA_SERVER_PORT = 43870
 DEFAULT_OLLAMA_MODEL = 'gemma4:e2b'
 DEFAULT_OLLAMA_API_BASE = 'http://127.0.0.1:11434'
 DEFAULT_ANALYZE_MODEL = 'openai/gpt-5-nano'
-DEFAULT_QA_MODEL = 'openai/gpt-5.6-luna'
+DEFAULT_QA_MODEL = 'openai/gpt-oss-120b'
 DEFAULT_OPENROUTER_MODEL = 'openai/gpt-oss-120b'
 DEFAULT_OPENROUTER_API_BASE = 'https://openrouter.ai/api/v1'
 # The visibility probe runs on the OpenRouter-hosted open model by default.

@@ -1383,7 +1383,7 @@
                             <input id="qaApiKeyInput" class="qa-input" type="password" placeholder="OpenAI API 키 입력 | Enter OpenAI API key (브라우저에만 저장)" autocomplete="off" />
                             <div class="action-row" style="margin-top: 0; align-items: center;">
                                 <label for="qaModelInput" class="meta" style="white-space: nowrap;">모델 | Model</label>
-                                <input id="qaModelInput" class="qa-input" type="text" value="gpt-5.6-luna" placeholder="gpt-5.6-luna" />
+                                <input id="qaModelInput" class="qa-input" type="text" value="openai/gpt-oss-120b" placeholder="openai/gpt-oss-120b" />
                             </div>
                             <div class="action-row" style="margin-top: 0; align-items: center;">
                                 <label for="qaCountInput" class="meta" style="white-space: nowrap;">생성 개수 | Count (1–30)</label>
@@ -1818,7 +1818,7 @@
                 if (typed) {
                     return typed;
                 }
-                return getProbeProvider() === 'openrouter' ? 'openai/gpt-oss-120b' : 'gpt-5.6-luna';
+                return 'openai/gpt-oss-120b';
             }
 
             function getProbeCount(inputId, fallback) {
@@ -2484,7 +2484,7 @@
                     return typed;
                 }
                 const runtimeModel = String(qaRuntime.model || '').replace(/^openai\//, '');
-                return runtimeModel || 'gpt-5.6-luna';
+                return runtimeModel || 'openai/gpt-oss-120b';
             }
 
             function saveQaSettings() {
