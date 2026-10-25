@@ -92,10 +92,11 @@ def resolve_target_url(args) -> str | None:
 def build_browser_options(args) -> dict[str, Any] | None:
     """Build the browser fetch options, or None when HTTP mode is used.
 
-    Browser mode is opt-in via ``--browser`` (or the ``KG_BROWSER`` env var)
-    because it launches a real Chrome instance.
+    Browser mode is the default; pass ``--http`` (or set ``KG_BROWSER=0``)
+    to fall back to a plain HTTP client. Browser mode launches a real Chrome
+    instance over CDP.
     """
-    enabled = bool(getattr(args, 'browser', False)) or _env_flag('KG_BROWSER')
+    enabled = bool(getattr(args, 'browser', True)) and _env_flag_default_true('KG_BROWSER')
     if not enabled:
         return None
 
@@ -115,6 +116,17 @@ def build_browser_options(args) -> dict[str, Any] | None:
 def _env_flag(name: str) -> bool:
     value = os.getenv(name, '')
     return value.strip().lower() in {'1', 'true', 'yes', 'on'}
+
+
+def _env_flag_default_true(name: str) -> bool:
+    """Env flag that defaults to True unless explicitly disabled.
+
+    ``KG_BROWSER=0`` / ``false`` / ``no`` / ``off`` turns browser mode off.
+    """
+    value = os.getenv(name)
+    if value is None:
+        return True
+    return value.strip().lower() not in {'0', 'false', 'no', 'off'}
 
 
 def build_output_path(target_url: str, output_path: str | None) -> Path:
@@ -600,7 +612,7 @@ def analyze(
     open_browser: bool = False,
     config_path: str | Path | None = None,
     work_dir: str | Path | None = None,
-    browser: bool = False,
+    browser: bool = True,
     browser_headless: bool = False,
     chrome_path: str | None = None,
     cdp_url: str | None = None,

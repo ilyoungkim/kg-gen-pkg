@@ -135,9 +135,14 @@ def main():
     analyze_parser.add_argument("--verbose", "-v", action="store_true", help="Verbose logs")
     analyze_parser.add_argument("--config", default=None, help="config.json path (extraction guideline)")
     analyze_parser.add_argument("--no-browser", action="store_true", help="Do not open browser after generation")
-    analyze_parser.add_argument(
+    crawl_mode = analyze_parser.add_mutually_exclusive_group()
+    crawl_mode.add_argument(
         "--browser", action="store_true",
-        help="Crawl with a real Chrome over CDP instead of plain HTTP",
+        help="Crawl with a real Chrome over CDP (default)",
+    )
+    crawl_mode.add_argument(
+        "--http", action="store_true",
+        help="Crawl with plain HTTP instead of Chrome",
     )
     analyze_parser.add_argument(
         "--browser-headless", dest="browser_headless", action="store_true",
@@ -169,9 +174,14 @@ def main():
         "--merge-output", default=None,
         help="After the batch, merge all per-URL sources.json into one graph.html here",
     )
-    batch_parser.add_argument(
+    batch_crawl_mode = batch_parser.add_mutually_exclusive_group()
+    batch_crawl_mode.add_argument(
         "--browser", action="store_true",
-        help="Crawl with a real Chrome over CDP instead of plain HTTP",
+        help="Crawl with a real Chrome over CDP (default)",
+    )
+    batch_crawl_mode.add_argument(
+        "--http", action="store_true",
+        help="Crawl with plain HTTP instead of Chrome",
     )
     batch_parser.add_argument(
         "--browser-headless", dest="browser_headless", action="store_true",
@@ -295,7 +305,7 @@ def main():
                 verbose=args.verbose,
                 open_browser=not args.no_browser,
                 config_path=args.config,
-                browser=args.browser,
+                browser=not args.http,
                 browser_headless=args.browser_headless,
                 chrome_path=args.chrome_path,
                 cdp_url=args.cdp_url,
@@ -326,7 +336,7 @@ def main():
                 only_host=args.only_host,
                 only_case_ids=args.case_ids,
                 dry_run=args.dry_run,
-                browser=args.browser,
+                browser=not args.http,
                 browser_headless=args.browser_headless,
                 chrome_path=args.chrome_path,
                 cdp_url=args.cdp_url,

@@ -105,7 +105,7 @@ def run_batch(
     only_host: str | None = None,
     only_case_ids: Sequence[int] | None = None,
     dry_run: bool = False,
-    browser: bool = False,
+    browser: bool = True,
     browser_headless: bool = False,
     chrome_path: str | None = None,
     cdp_url: str | None = None,
